@@ -186,7 +186,6 @@ const EMBEDS = {
   'scripts-krunkscript-generator': 'ks-generator.html',
   'scripts-krunkscript-docs-kr': 'kr-docs/index.html',
   'scripts-krunkscript-docs-swatdoge': 'https://krdocs.swatdoge.eu/',
-  'servers-discord': 'kr-docs/index.html#/files/krunker_discord_community_servers',
 };
 
 function renderContent(){
