@@ -13,7 +13,7 @@
 * [Mod/Resource Packs](./files/mod-resource_packs.md)
 * [Multiplayer & Networking](./files/multiplayer_&_networking.md)
 * [Data Storage](./files/data_storage.md)
-* [Servers & Hosting](./files/servers_&_hosting.md)
+* [Krunker Discord Community Servers](./files/krunker_discord_community_servers.md)
 * [Platforms](./files/platforms.md)
 * [Revenue & Currencies](./files/revenue_&_currencies.md)
 * [Publish your Game](./files/publish_your_game.md)
