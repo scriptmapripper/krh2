@@ -52,6 +52,16 @@ header{display:flex; align-items:center; gap:18px; flex-wrap:wrap; margin-bottom
   height:66px; width:auto; flex:none;
   filter:drop-shadow(0 0 16px rgba(59,130,246,.35));
 }
+.title-block{display:flex; flex-direction:column; gap:4px;}
+.brand-title{
+  font-family:'Orbitron', sans-serif;
+  font-weight:800;
+  letter-spacing:1px;
+  font-size:26px;
+  color:var(--text-0);
+  text-shadow:0 0 18px rgba(59,130,246,.35);
+}
+.tagline{
   font-family:'Rajdhani', sans-serif;
   font-weight:600;
   letter-spacing:2.5px;
