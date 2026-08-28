@@ -14,6 +14,7 @@ const ICONS = {
   news: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10v4a1 1 0 0 0 1 1h2l4.5 4V5L6 9H4a1 1 0 0 0-1 1Z"/><path d="M16 8.5a4 4 0 0 1 0 7M19 6a7.5 7.5 0 0 1 0 12"/></svg>',
   clients: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8.5" r="3"/><path d="M3.5 20c0-3 2.5-5.2 5.5-5.2S14.5 17 14.5 20"/><circle cx="17" cy="9.5" r="2.4"/><path d="M14.8 15c2.7.3 4.7 2.3 4.7 5"/></svg>',
   info: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><line x1="12" y1="11" x2="12" y2="16.5"/><circle cx="12" cy="7.8" r="1" fill="currentColor" stroke="none"/></svg>',
+  server: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4" width="17" height="6" rx="1.4"/><rect x="3.5" y="14" width="17" height="6" rx="1.4"/><circle cx="7" cy="7" r=".9" fill="currentColor" stroke="none"/><circle cx="7" cy="17" r=".9" fill="currentColor" stroke="none"/></svg>',
 };
 function icon(key){ return ICONS[key] || ''; }
 
@@ -87,6 +88,9 @@ const DATA = [
 
   { id:'clients', label:'Clients', color:'cyan', glyph:'clients',
     children:[ { id:'clients-official', label:'Krunker Official & Custom Clients' } ] },
+
+  { id:'servers', label:'Servers', color:'cyan', glyph:'server',
+    children:[ { id:'servers-hosting', label:'Servers & Hosting' } ] },
 
   { id:'about', label:'About Us', color:'cyan', glyph:'info',
     children:[
@@ -182,6 +186,7 @@ const EMBEDS = {
   'scripts-krunkscript-generator': 'ks-generator.html',
   'scripts-krunkscript-docs-kr': 'kr-docs/index.html',
   'scripts-krunkscript-docs-swatdoge': 'https://krdocs.swatdoge.eu/',
+  'servers-hosting': 'kr-docs/index.html#/files/servers_&_hosting',
 };
 
 function renderContent(){
