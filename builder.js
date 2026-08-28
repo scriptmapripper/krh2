@@ -90,11 +90,7 @@ const DATA = [
     children:[ { id:'clients-official', label:'Krunker Official & Custom Clients' } ] },
 
   { id:'servers', label:'Servers', color:'cyan', glyph:'server',
-<<<<<<< HEAD
     children:[ { id:'servers-discord', label:'Krunker Discord Community Servers' } ] },
-=======
-    children:[ { id:'servers-hosting', label:'Servers & Hosting' } ] },
->>>>>>> 7369ca6320d30f63d89e82077fd33718da0d914f
 
   { id:'about', label:'About Us', color:'cyan', glyph:'info',
     children:[
@@ -190,11 +186,6 @@ const EMBEDS = {
   'scripts-krunkscript-generator': 'ks-generator.html',
   'scripts-krunkscript-docs-kr': 'kr-docs/index.html',
   'scripts-krunkscript-docs-swatdoge': 'https://krdocs.swatdoge.eu/',
-<<<<<<< HEAD
-  'servers-discord': 'kr-docs/index.html#/files/krunker_discord_community_servers',
-=======
-  'servers-hosting': 'kr-docs/index.html#/files/servers_&_hosting',
->>>>>>> 7369ca6320d30f63d89e82077fd33718da0d914f
 };
 
 function renderContent(){
