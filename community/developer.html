@@ -36,9 +36,10 @@ async function boot() {
 
   const nav = document.getElementById("topnav");
   nav.innerHTML = `
-    <span style="color:var(--text-1); font-size:13.5px; margin-right:4px;">${escapeHtml(profile.display_name)} ${roleBadge(profile.role)}</span>
+    <span style="display:inline-flex; align-items:center; gap:6px; color:var(--text-1); font-size:13.5px; margin-right:4px;">${avatarHtml(profile, 26)} ${escapeHtml(profile.display_name)} ${roleBadge(profile.role)}</span>
     <a href="dashboard.html">Dashboard</a>
     <a href="admin.html">Admin Panel</a>
+    <a href="settings.html">Settings</a>
     <a href="#" id="btnLogout">Logout</a>
   `;
   document.getElementById("btnLogout").addEventListener("click", async (e) => {

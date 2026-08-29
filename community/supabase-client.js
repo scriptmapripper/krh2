@@ -53,6 +53,16 @@ function roleBadge(role) {
   return map[role] || map.user;
 }
 
+// Returns an <img> or a fallback initial-letter avatar as an HTML string
+function avatarHtml(profile, size = 32) {
+  const s = size + "px";
+  if (profile?.avatar_url) {
+    return `<img src="${escapeHtml(profile.avatar_url)}" alt="avatar" style="width:${s}; height:${s}; border-radius:50%; object-fit:cover; border:1px solid var(--border); vertical-align:middle;">`;
+  }
+  const letter = (profile?.display_name || profile?.username || "?").trim().charAt(0).toUpperCase();
+  return `<span style="display:inline-flex; align-items:center; justify-content:center; width:${s}; height:${s}; border-radius:50%; background:var(--surface-2); border:1px solid var(--border); color:var(--text-1); font-weight:700; font-size:${Math.round(size*0.45)}px; vertical-align:middle;">${letter}</span>`;
+}
+
 function escapeHtml(str) {
   const d = document.createElement("div");
   d.textContent = str ?? "";

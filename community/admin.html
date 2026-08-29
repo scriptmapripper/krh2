@@ -47,9 +47,10 @@ async function boot() {
   if (!profile) return;
 
   const nav = document.getElementById("topnav");
-  let links = `<span style="color:var(--text-1); font-size:13.5px; margin-right:4px;">${escapeHtml(profile.display_name)} ${roleBadge(profile.role)}</span>`;
+  let links = `<span style="display:inline-flex; align-items:center; gap:6px; color:var(--text-1); font-size:13.5px; margin-right:4px;">${avatarHtml(profile, 26)} ${escapeHtml(profile.display_name)} ${roleBadge(profile.role)}</span>`;
   links += `<a href="dashboard.html">Dashboard</a>`;
   if (profile.role === "developer") links += `<a href="developer.html">Developer Panel</a>`;
+  links += `<a href="settings.html">Settings</a>`;
   links += `<a href="#" id="btnLogout">Logout</a>`;
   nav.innerHTML = links;
   document.getElementById("btnLogout").addEventListener("click", async (e) => {
@@ -65,7 +66,7 @@ async function boot() {
 async function loadAll() {
   const { data, error } = await sb
     .from("posts")
-    .select("*, profiles!posts_author_id_fkey(username,display_name)")
+    .select("*, profiles!posts_author_id_fkey(username,display_name,avatar_url)")
     .order("created_at", { ascending: false });
   const el = document.getElementById("allPosts");
   if (error) { el.innerHTML = `<div class="empty">Failed to load: ${escapeHtml(error.message)}</div>`; return; }
@@ -91,7 +92,7 @@ function render() {
       <div class="meta">
         <span class="status-pill ${p.status === 'published' ? 'status-published' : 'status-draft'}">${p.status}</span>
         ${p.category === 'crosshair' ? '<span class="role-badge role-admin">Crosshair</span>' : ''}
-        <span>by ${escapeHtml(p.profiles?.display_name || "?")} (@${escapeHtml(p.profiles?.username || "-")})</span>
+        <span style="display:inline-flex; align-items:center; gap:5px;">${avatarHtml(p.profiles, 16)} by ${escapeHtml(p.profiles?.display_name || "?")} (@${escapeHtml(p.profiles?.username || "-")})</span>
         <span>${formatDate(p.created_at)}</span>
       </div>
       <div class="content">${escapeHtml(p.content)}</div>
