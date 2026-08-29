@@ -107,6 +107,7 @@ const COLOR_VAR = { blue:'var(--blue)', green:'var(--green)', orange:'var(--oran
 let activeMainId = DATA[0].id;
 let selectedId = DATA[0].children[0].id;
 let expanded = new Set();
+let manualEmbedNodeId = null; /* set when "Create Post" is clicked on a placeholder page */
 
 function findMain(id){ return DATA.find(n => n.id === id); }
 function findPath(nodes, id, trail=[]){
@@ -493,6 +494,12 @@ function renderLinkPage(node, main, crumbs){
   `;
 }
 
+/* Leaf nodes that stay as a plain placeholder by default, but offer a
+   "Create Post" button that loads the real community post page on demand. */
+const POST_LINKS = {
+  'crosshair-crosshairs': 'community/crosshairs.html',
+};
+
 function renderContent(){
   const path = fullPath(selectedId) || [findMain(activeMainId)];
   const node = path[path.length - 1];
@@ -507,6 +514,20 @@ function renderContent(){
   ).join(' <span class="sep">/</span> ');
 
   const kids = node.children && node.children.length ? node.children : null;
+
+  if(manualEmbedNodeId !== node.id) manualEmbedNodeId = null;
+
+  if(POST_LINKS[node.id] && manualEmbedNodeId === node.id){
+    el.innerHTML = `
+      <div class="breadcrumb">${crumbs}</div>
+      <div class="content-head">
+        <div class="content-icon">${icon(main.glyph)}</div>
+        <h2>${node.label}</h2>
+      </div>
+      <iframe class="embed-frame" src="${POST_LINKS[node.id]}" title="${node.label}" loading="lazy"></iframe>
+    `;
+    return;
+  }
 
   if(EMBEDS[node.id]){
     el.innerHTML = `
@@ -547,7 +568,15 @@ function renderContent(){
           <span>${k.label}</span>
         </button>`).join('')}</div>` : ''}
     <div class="status-note">This section mirrors the site mindmap — structure only, content to be filled in as the hub is built out.</div>
+    ${POST_LINKS[node.id] ? `<button class="btn small ghost" id="btnCreatePost" style="margin-top:14px;">Create Post</button>` : ''}
   `;
+
+  if(POST_LINKS[node.id]){
+    document.getElementById('btnCreatePost').addEventListener('click', () => {
+      manualEmbedNodeId = node.id;
+      renderContent();
+    });
+  }
 
   el.querySelectorAll('.child-card').forEach(card => {
     card.addEventListener('click', () => {
