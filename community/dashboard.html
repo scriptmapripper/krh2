@@ -22,10 +22,17 @@
     <textarea id="pContent" placeholder="Write your content here..."></textarea>
     <label>Category</label>
     <select id="pCategory">
-      <option value="general">General</option>
       <option value="crosshair">Crosshair</option>
+      <option value="settings-ready">Settings — Ready Settings</option>
+      <option value="css-ready">CSS — Ready CSS</option>
+      <option value="maps-official-infected">Maps — Infected</option>
+      <option value="maps-official-tdm">Maps — TDM</option>
+      <option value="maps-custom-parkour">Maps — Parkour (Custom)</option>
+      <option value="mods-files">Mods — Mods Files</option>
+      <option value="scripts-userscript-legal">Scripts — Legal Script</option>
+      <option value="scripts-userscript-hack">Scripts — Hack Script</option>
     </select>
-    <p class="hint">Crosshair posts also appear under the Crosshair &gt; Crosshairs tab. Build your crosshair with <a href="../crosshair-maker.html" style="color:var(--blue-glow); text-decoration:underline;">Custom Crosshair Maker</a> first if needed.</p>
+    <p class="hint">Posts also appear under their matching section on the site (e.g. Crosshair posts under Crosshair &gt; Crosshairs, Ready Settings posts under Settings &gt; Ready Settings, etc). Build your crosshair with <a href="../crosshair-maker.html" style="color:var(--blue-glow); text-decoration:underline;">Custom Crosshair Maker</a> first if needed.</p>
     <div class="row2" style="margin-top:14px;">
       <button class="btn ghost" id="btnDraft" style="margin-top:0;">Save as Draft</button>
       <button class="btn green" id="btnPublish" style="margin-top:0;">Publish Now</button>
@@ -113,7 +120,7 @@ async function loadMyPosts() {
       <div class="title">${escapeHtml(p.title)}</div>
       <div class="meta">
         <span class="status-pill ${p.status === 'published' ? 'status-published' : 'status-draft'}">${p.status}</span>
-        ${p.category === 'crosshair' ? '<span class="role-badge role-admin">Crosshair</span>' : ''}
+        <span class="role-badge role-admin">${escapeHtml(p.category)}</span>
         <span>${formatDate(p.created_at)}</span>
       </div>
       <div class="content">${escapeHtml(p.content)}</div>

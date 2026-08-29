@@ -59,14 +59,22 @@ create table if not exists public.posts (
   title       text not null,
   content     text not null,
   status      text not null default 'draft' check (status in ('draft','published')),
-  category    text not null default 'general' check (category in ('general','crosshair')),
+  category    text not null default 'crosshair' check (category in (
+    'crosshair','settings-ready','css-ready',
+    'maps-official-infected','maps-official-tdm','maps-custom-parkour',
+    'mods-files','scripts-userscript-legal','scripts-userscript-hack'
+  )),
   created_at  timestamptz not null default now(),
   updated_at  timestamptz not null default now()
 );
 
 -- Kalau tabel posts sudah pernah dibuat SEBELUM kolom category ada,
 -- jalankan ini aja (aman dijalankan berkali-kali):
--- alter table public.posts add column if not exists category text not null default 'general' check (category in ('general','crosshair'));
+-- alter table public.posts add column if not exists category text not null default 'crosshair' check (category in (
+--   'crosshair','settings-ready','css-ready',
+--   'maps-official-infected','maps-official-tdm','maps-custom-parkour',
+--   'mods-files','scripts-userscript-legal','scripts-userscript-hack'
+-- ));
 
 alter table public.posts enable row level security;
 

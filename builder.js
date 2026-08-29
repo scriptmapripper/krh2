@@ -190,6 +190,13 @@ const EMBEDS = {
   'scripts-krunkscript-generator': 'ks-generator.html',
   'scripts-krunkscript-docs-kr': 'kr-docs/index.html',
   'scripts-krunkscript-docs-swatdoge': 'https://krdocs.swatdoge.eu/',
+  'settings-ready': 'community/section.html?cat=settings-ready&title=Ready%20Settings',
+  'css-ready': 'community/section.html?cat=css-ready&title=Ready%20CSS',
+  'maps-official-infected': 'community/section.html?cat=maps-official-infected&title=Infected',
+  'maps-official-tdm': 'community/section.html?cat=maps-official-tdm&title=TDM',
+  'maps-custom-parkour': 'community/section.html?cat=maps-custom-parkour&title=Parkour',
+  'mods-files': 'community/section.html?cat=mods-files&title=Mods%20Files',
+  'scripts-userscript-hack': 'community/section.html?cat=scripts-userscript-hack&title=Hack%20Script',
 };
 
 /* Leaf nodes that get a real downloadable resource list instead of the
@@ -200,6 +207,12 @@ const TAG_COLORS = {
   Userscript:'#22d3ee', Software:'#38bdf8', 'External Program':'#38bdf8',
   'In-Game':'#a3e635', Hub:'#e879f9', Tools:'#8b5cf6', Utility:'#2dd4bf',
   UI:'#60a5fa', Enhancement:'#fb923c', Performance:'#4ade80', compatible:'#94a3b8',
+};
+
+/* Leaf nodes that already show a curated RESOURCE_LISTS grid, but should
+   ALSO let the community post their own submissions below it. */
+const COMMUNITY_SECTIONS = {
+  'scripts-userscript-legal': { cat:'scripts-userscript-legal', title:'Legal Script' },
 };
 
 const RESOURCE_LISTS = {
@@ -393,6 +406,12 @@ function renderResourceList(node, main, path, crumbs, color){
         </div>`).join('')}
     </div>
     <div class="status-note">Use at your own risk. Always review a script before running it, and keep your userscript manager up to date.</div>
+    ${COMMUNITY_SECTIONS[node.id] ? `
+      <div class="content-head" style="margin-top:26px;">
+        <h2 style="margin:0;">Community Submissions</h2>
+      </div>
+      <iframe class="embed-frame" src="community/section.html?cat=${encodeURIComponent(COMMUNITY_SECTIONS[node.id].cat)}&title=${encodeURIComponent(COMMUNITY_SECTIONS[node.id].title)}" title="${COMMUNITY_SECTIONS[node.id].title} community submissions" loading="lazy"></iframe>
+    ` : ''}
   `;
 
   el.querySelectorAll('.resource-card').forEach(card => {

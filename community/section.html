@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Krunker Resource Hub</title>
+<link rel="stylesheet" href="community.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div class="brand"><a href="../index.html">◂ Krunker Resource Hub</a></div>
+    <div class="topnav" id="topnav"></div>
+  </div>
+
+  <div class="card">
+    <h1 id="pageTitle">Posts</h1>
+    <p class="subtitle" id="pageSubtitle">Community submissions for this section.</p>
+  </div>
+
+  <div class="card" id="submitCard" style="display:none;">
+    <h2 id="submitHeading">Post Here</h2>
+    <label>Title</label>
+    <input type="text" id="pTitle" placeholder="Title">
+    <label>Content</label>
+    <textarea id="pContent" placeholder="Write your content, paste your code, or link a file here"></textarea>
+    <button class="btn green" id="btnPublish">Publish</button>
+    <div class="msg" id="createMsg"></div>
+  </div>
+
+  <div class="card" id="loginPrompt">
+    <p class="subtitle" style="margin-bottom:14px;">Log in to post here.</p>
+    <a href="login.html" class="btn ghost" style="display:block; text-align:center; margin-bottom:10px;">Login</a>
+    <a href="signup.html" class="btn" style="display:block; text-align:center;">Sign Up</a>
+  </div>
+
+  <div class="card">
+    <h2 id="feedHeading">All Posts</h2>
+    <div id="feed"><div class="empty">Loading...</div></div>
+  </div>
+
+  <div class="card" id="logoutCard" style="display:none;">
+    <button class="btn logout-btn" id="btnLogout">Logout</button>
+  </div>
+</div>
+
+<script src="supabase-client.js"></script>
+<script>
+let me = null;
+
+const params = new URLSearchParams(window.location.search);
+const CAT = params.get("cat") || "crosshair";
+const TITLE = params.get("title") || "Posts";
+
+document.title = TITLE + " — Krunker Resource Hub";
+document.getElementById("pageTitle").textContent = TITLE;
+document.getElementById("pageSubtitle").textContent = `Community submissions filed under ${TITLE}.`;
+document.getElementById("submitHeading").textContent = `Post Your ${TITLE}`;
+document.getElementById("feedHeading").textContent = `All ${TITLE} Posts`;
+
+async function boot() {
+  me = await getSessionUser();
+  const nav = document.getElementById("topnav");
+
+  if (me) {
+    const profile = await getMyProfile();
+    let links = `<a href="dashboard.html">Dashboard</a>`;
+    if (profile.role === "admin" || profile.role === "developer") links += `<a href="admin.html">Admin Panel</a>`;
+    if (profile.role === "developer") links += `<a href="developer.html">Developer Panel</a>`;
+    links += `<span style="color:var(--text-1); font-size:13.5px; margin-left:4px;">${escapeHtml(profile.display_name)} ${roleBadge(profile.role)}</span>`;
+    links += `<a href="settings.html" style="margin-left:6px;">Settings</a>`;
+    nav.innerHTML = links;
+    document.getElementById("logoutCard").style.display = "block";
+    document.getElementById("btnLogout").addEventListener("click", async (e) => {
+      e.preventDefault();
+      if (!confirm("Are you sure you want to log out?")) return;
+      await sb.auth.signOut(); window.location.reload();
+    });
+
+    document.getElementById("submitCard").style.display = "block";
+    document.getElementById("loginPrompt").style.display = "none";
+  } else {
+    nav.innerHTML = `<a href="login.html">Login</a><a href="signup.html">Sign Up</a>`;
+  }
+
+  loadFeed();
+}
+
+document.getElementById("btnPublish")?.addEventListener("click", async () => {
+  const msg = document.getElementById("createMsg");
+  const title = document.getElementById("pTitle").value.trim();
+  const content = document.getElementById("pContent").value.trim();
+  if (!title || !content) {
+    msg.className = "msg error show"; msg.textContent = "Title & content are required.";
+    return;
+  }
+  const { error } = await sb.from("posts").insert({
+    author_id: me.id, title, content, status: "published", category: CAT,
+  });
+  if (error) {
+    msg.className = "msg error show"; msg.textContent = error.message;
+    return;
+  }
+  msg.className = "msg ok show"; msg.textContent = "Posted!";
+  document.getElementById("pTitle").value = "";
+  document.getElementById("pContent").value = "";
+  loadFeed();
+});
+
+async function loadFeed() {
+  const el = document.getElementById("feed");
+  const { data, error } = await sb
+    .from("posts")
+    .select("*, profiles!posts_author_id_fkey(username,display_name,avatar_url)")
+    .eq("status", "published")
+    .eq("category", CAT)
+    .order("created_at", { ascending: false })
+    .limit(50);
+  if (error) { el.innerHTML = `<div class="empty">Failed to load: ${escapeHtml(error.message)}</div>`; return; }
+  if (!data.length) { el.innerHTML = `<div class="empty">Nothing posted here yet. Be the first!</div>`; return; }
+
+  el.innerHTML = data.map(p => `
+    <div class="post-item">
+      <div class="title">${escapeHtml(p.title)}</div>
+      <div class="meta">
+        <span style="display:inline-flex; align-items:center; gap:5px;">${avatarHtml(p.profiles, 16)} by ${escapeHtml(p.profiles?.display_name || "?")}</span>
+        <span>${formatDate(p.created_at)}</span>
+      </div>
+      <div class="content">${escapeHtml(p.content)}</div>
+    </div>
+  `).join("");
+}
+
+boot();
+</script>
+</body>
+</html>
