@@ -66,6 +66,8 @@ textarea{min-height:160px; resize:vertical; line-height:1.5;}
 .btn.green{background:linear-gradient(135deg, var(--green), #17a350);}
 .btn.discord{background:#5865F2;}
 .btn.ghost{background:transparent; border:1px solid var(--border); color:var(--text-1);}
+.btn.logout-btn{background:transparent; border:1px solid var(--border); color:var(--text-1); filter:none;}
+.btn.logout-btn:hover{background:linear-gradient(135deg, var(--red), #b91c1c); border-color:var(--red); color:#fff; filter:none;}
 
 .msg{padding:10px 14px; border-radius:8px; font-size:13.5px; margin-top:14px; display:none;}
 .msg.show{display:block;}

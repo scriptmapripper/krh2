@@ -24,6 +24,10 @@
     <input type="text" id="search" placeholder="Search username / name..." style="margin-bottom:16px;">
     <div id="userList"><div class="empty">Loading...</div></div>
   </div>
+
+  <div class="card">
+    <button class="btn logout-btn" id="btnLogout">Logout</button>
+  </div>
 </div>
 
 <script src="supabase-client.js"></script>
@@ -38,13 +42,13 @@ async function boot() {
   nav.innerHTML = `
     <a href="dashboard.html">Dashboard</a>
     <a href="admin.html">Admin Panel</a>
-    <a href="#" id="btnLogout">Logout</a>
     <span style="color:var(--text-1); font-size:13.5px; margin-left:4px;">${escapeHtml(profile.display_name)} ${roleBadge(profile.role)}</span>
-    <span style="width:1px; height:22px; background:var(--border); margin:0 10px 0 6px; display:inline-block;"></span>
-    <a href="settings.html" title="Account Settings" style="padding:0; border:none; background:none; display:inline-flex; align-items:center;">${avatarHtml(profile, 28)}</a>
+    <a href="settings.html" style="margin-left:6px;">Settings</a>
   `;
   document.getElementById("btnLogout").addEventListener("click", async (e) => {
-    e.preventDefault(); await sb.auth.signOut(); window.location.href = "../index.html";
+    e.preventDefault();
+    if (!confirm("Are you sure you want to log out?")) return;
+    await sb.auth.signOut(); window.location.href = "../index.html";
   });
 
   loadUsers();
