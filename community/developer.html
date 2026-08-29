@@ -40,6 +40,7 @@ async function boot() {
     <a href="admin.html">Admin Panel</a>
     <a href="#" id="btnLogout">Logout</a>
     <span style="color:var(--text-1); font-size:13.5px; margin-left:4px;">${escapeHtml(profile.display_name)} ${roleBadge(profile.role)}</span>
+    <span style="width:1px; height:22px; background:var(--border); margin:0 10px 0 6px; display:inline-block;"></span>
     <a href="settings.html" title="Account Settings" style="padding:0; border:none; background:none; display:inline-flex; align-items:center;">${avatarHtml(profile, 28)}</a>
   `;
   document.getElementById("btnLogout").addEventListener("click", async (e) => {
