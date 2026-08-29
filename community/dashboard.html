@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — Krunker Resource Hub</title>
+<link rel="stylesheet" href="community.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div class="brand"><a href="../index.html">◂ Krunker Resource Hub</a></div>
+    <div class="topnav" id="topnav"></div>
+  </div>
+
+  <div class="card">
+    <h2>Buat Post Baru</h2>
+    <label>Judul</label>
+    <input type="text" id="pTitle" placeholder="Judul post kamu">
+    <label>Isi</label>
+    <textarea id="pContent" placeholder="Tulis konten di sini..."></textarea>
+    <label>Kategori</label>
+    <select id="pCategory">
+      <option value="general">General</option>
+      <option value="crosshair">Crosshair</option>
+    </select>
+    <p class="hint">Post crosshair juga muncul di tab Crosshair &gt; Crosshairs. Buat crosshair-nya di <a href="../crosshair-maker.html" style="color:var(--blue-glow); text-decoration:underline;">Custom Crosshair Maker</a> dulu kalau perlu.</p>
+    <div class="row2" style="margin-top:14px;">
+      <button class="btn ghost" id="btnDraft" style="margin-top:0;">Simpan sebagai Draft</button>
+      <button class="btn green" id="btnPublish" style="margin-top:0;">Publish Sekarang</button>
+    </div>
+    <div class="msg" id="createMsg"></div>
+  </div>
+
+  <div class="card">
+    <h2>Post Saya</h2>
+    <div id="myPosts"><div class="empty">Memuat...</div></div>
+  </div>
+
+  <div class="card">
+    <h2>Feed Publik</h2>
+    <div id="publicFeed"><div class="empty">Memuat...</div></div>
+  </div>
+</div>
+
+<script src="supabase-client.js"></script>
+<script>
+let me = null;
+
+async function boot() {
+  me = await requireLogin("login.html");
+  const profile = await getMyProfile();
+  if (!profile) { window.location.href = "login.html"; return; }
+
+  const nav = document.getElementById("topnav");
+  let links = `<span style="color:var(--text-1); font-size:13.5px; margin-right:4px;">Halo, ${escapeHtml(profile.display_name)} ${roleBadge(profile.role)}</span>`;
+  if (profile.role === "admin" || profile.role === "developer") {
+    links += `<a href="admin.html">Panel Admin</a>`;
+  }
+  if (profile.role === "developer") {
+    links += `<a href="developer.html">Panel Developer</a>`;
+  }
+  links += `<a href="#" id="btnLogout">Logout</a>`;
+  nav.innerHTML = links;
+  document.getElementById("btnLogout").addEventListener("click", async (e) => {
+    e.preventDefault();
+    await sb.auth.signOut();
+    window.location.href = "../index.html";
+  });
+
+  loadMyPosts();
+  loadPublicFeed();
+}
+
+async function createPost(status) {
+  const msg = document.getElementById("createMsg");
+  const title = document.getElementById("pTitle").value.trim();
+  const content = document.getElementById("pContent").value.trim();
+  if (!title || !content) {
+    msg.className = "msg error show"; msg.textContent = "Judul & isi wajib diisi.";
+    return;
+  }
+  const category = document.getElementById("pCategory").value;
+  const { error } = await sb.from("posts").insert({ author_id: me.id, title, content, status, category });
+  if (error) {
+    msg.className = "msg error show"; msg.textContent = error.message;
+    return;
+  }
+  msg.className = "msg ok show"; msg.textContent = status === "published" ? "Post dipublish!" : "Draft disimpan!";
+  document.getElementById("pTitle").value = "";
+  document.getElementById("pContent").value = "";
+  loadMyPosts();
+  if (status === "published") loadPublicFeed();
+}
+
+document.getElementById("btnDraft").addEventListener("click", () => createPost("draft"));
+document.getElementById("btnPublish").addEventListener("click", () => createPost("published"));
+
+async function loadMyPosts() {
+  const el = document.getElementById("myPosts");
+  const { data, error } = await sb.from("posts").select("*").eq("author_id", me.id).order("created_at", { ascending: false });
+  if (error) { el.innerHTML = `<div class="empty">Gagal memuat: ${escapeHtml(error.message)}</div>`; return; }
+  if (!data.length) { el.innerHTML = `<div class="empty">Belum ada post. Buat yang pertama di atas!</div>`; return; }
+  el.innerHTML = data.map(p => `
+    <div class="post-item" data-id="${p.id}">
+      <div class="title">${escapeHtml(p.title)}</div>
+      <div class="meta">
+        <span class="status-pill ${p.status === 'published' ? 'status-published' : 'status-draft'}">${p.status}</span>
+        ${p.category === 'crosshair' ? '<span class="role-badge role-admin">Crosshair</span>' : ''}
+        <span>${formatDate(p.created_at)}</span>
+      </div>
+      <div class="content">${escapeHtml(p.content)}</div>
+      <div class="post-actions">
+        ${p.status === 'draft'
+          ? `<button class="btn small green" onclick="togglePublish('${p.id}','published')">Publish</button>`
+          : `<button class="btn small ghost" onclick="togglePublish('${p.id}','draft')">Unpublish</button>`}
+        <button class="btn small danger" onclick="deletePost('${p.id}')">Hapus</button>
+      </div>
+    </div>
+  `).join("");
+}
+
+async function togglePublish(id, status) {
+  await sb.from("posts").update({ status }).eq("id", id);
+  loadMyPosts(); loadPublicFeed();
+}
+
+async function deletePost(id) {
+  if (!confirm("Yakin mau hapus post ini?")) return;
+  await sb.from("posts").delete().eq("id", id);
+  loadMyPosts(); loadPublicFeed();
+}
+
+async function loadPublicFeed() {
+  const el = document.getElementById("publicFeed");
+  const { data, error } = await sb
+    .from("posts")
+    .select("*, profiles!posts_author_id_fkey(username,display_name)")
+    .eq("status", "published")
+    .order("created_at", { ascending: false })
+    .limit(20);
+  if (error) { el.innerHTML = `<div class="empty">Gagal memuat: ${escapeHtml(error.message)}</div>`; return; }
+  if (!data.length) { el.innerHTML = `<div class="empty">Belum ada post publik.</div>`; return; }
+  el.innerHTML = data.map(p => `
+    <div class="post-item">
+      <div class="title">${escapeHtml(p.title)}</div>
+      <div class="meta">
+        <span>oleh ${escapeHtml(p.profiles?.display_name || "?")}</span>
+        <span>${formatDate(p.created_at)}</span>
+      </div>
+      <div class="content">${escapeHtml(p.content)}</div>
+    </div>
+  `).join("");
+}
+
+boot();
+</script>
+</body>
+</html>

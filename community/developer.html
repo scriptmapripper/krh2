@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panel Developer — Krunker Resource Hub</title>
+<link rel="stylesheet" href="community.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div class="brand"><a href="../index.html">◂ Krunker Resource Hub</a></div>
+    <div class="topnav" id="topnav"></div>
+  </div>
+
+  <div class="card">
+    <h1>Panel Developer</h1>
+    <p class="subtitle">Angkat atau turunkan Admin. Role Developer sendiri cuma bisa diubah lewat SQL (lihat sql/schema.sql).</p>
+  </div>
+
+  <div class="card">
+    <h2>Semua User</h2>
+    <input type="text" id="search" placeholder="Cari username / nama..." style="margin-bottom:16px;">
+    <div id="userList"><div class="empty">Memuat...</div></div>
+  </div>
+</div>
+
+<script src="supabase-client.js"></script>
+<script>
+let allUsers = [];
+
+async function boot() {
+  const profile = await requireRole(["developer"], "dashboard.html");
+  if (!profile) return;
+
+  const nav = document.getElementById("topnav");
+  nav.innerHTML = `
+    <span style="color:var(--text-1); font-size:13.5px; margin-right:4px;">${escapeHtml(profile.display_name)} ${roleBadge(profile.role)}</span>
+    <a href="dashboard.html">Dashboard</a>
+    <a href="admin.html">Panel Admin</a>
+    <a href="#" id="btnLogout">Logout</a>
+  `;
+  document.getElementById("btnLogout").addEventListener("click", async (e) => {
+    e.preventDefault(); await sb.auth.signOut(); window.location.href = "../index.html";
+  });
+
+  loadUsers();
+  document.getElementById("search").addEventListener("input", render);
+}
+
+async function loadUsers() {
+  const { data, error } = await sb.from("profiles").select("*").order("created_at", { ascending: false });
+  const el = document.getElementById("userList");
+  if (error) { el.innerHTML = `<div class="empty">Gagal memuat: ${escapeHtml(error.message)}</div>`; return; }
+  allUsers = data;
+  render();
+}
+
+function render() {
+  const q = document.getElementById("search").value.toLowerCase();
+  const el = document.getElementById("userList");
+  let rows = allUsers;
+  if (q) rows = rows.filter(u => u.username.toLowerCase().includes(q) || u.display_name.toLowerCase().includes(q));
+  if (!rows.length) { el.innerHTML = `<div class="empty">Gak ada user yang cocok.</div>`; return; }
+
+  el.innerHTML = rows.map(u => `
+    <div class="post-item">
+      <div class="title">${escapeHtml(u.display_name)} <span style="color:var(--text-2); font-weight:500;">@${escapeHtml(u.username)}</span></div>
+      <div class="meta">
+        ${roleBadge(u.role)}
+        ${u.discord_username ? `<span>Discord: ${escapeHtml(u.discord_username)}</span>` : ""}
+        ${u.krunker_username ? `<span>Krunker: ${escapeHtml(u.krunker_username)}</span>` : ""}
+        <span>Gabung ${formatDate(u.created_at)}</span>
+      </div>
+      <div class="post-actions">
+        ${u.role === 'developer' ? `<span class="hint">Role developer cuma bisa diubah lewat SQL.</span>` : ""}
+        ${u.role === 'user' ? `<button class="btn small green" onclick="setRole('${u.id}','admin')">Jadikan Admin</button>` : ""}
+        ${u.role === 'admin' ? `<button class="btn small danger" onclick="setRole('${u.id}','user')">Cabut Admin</button>` : ""}
+      </div>
+    </div>
+  `).join("");
+}
+
+async function setRole(id, role) {
+  const { error } = await sb.from("profiles").update({ role }).eq("id", id);
+  if (error) { alert("Gagal: " + error.message); return; }
+  loadUsers();
+}
+
+boot();
+</script>
+</body>
+</html>

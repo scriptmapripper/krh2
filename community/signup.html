@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daftar — Krunker Resource Hub</title>
+<link rel="stylesheet" href="community.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+<div class="wrap narrow">
+  <div class="topbar">
+    <div class="brand"><a href="../index.html">◂ Krunker Resource Hub</a></div>
+  </div>
+
+  <div class="card">
+    <h1>Buat Akun</h1>
+    <p class="subtitle">Langkah 1: sambungkan Discord. Langkah 2: lengkapi data akun.</p>
+
+    <!-- STEP 1: Discord connect -->
+    <div class="step active" id="step1">
+      <button class="btn discord" id="btnDiscord"><i>🔗</i> Connect with Discord</button>
+      <p class="hint">Kami cuma ambil username Discord kamu buat verifikasi identitas, gak dipakai buat login.</p>
+    </div>
+
+    <!-- STEP 2: registration form (muncul setelah discord connect) -->
+    <div class="step" id="step2">
+      <div class="msg ok show" id="discordConnected" style="margin-bottom:6px;"></div>
+
+      <label>Nama Lengkap</label>
+      <input type="text" id="fName" placeholder="Nama asli kamu">
+
+      <label>Username</label>
+      <input type="text" id="fUsername" placeholder="Dipakai buat tampil di post, unik">
+
+      <label>Email</label>
+      <input type="email" id="fEmail" placeholder="email@contoh.com">
+
+      <label>Password</label>
+      <input type="password" id="fPassword" placeholder="Minimal 6 karakter">
+
+      <div class="row2">
+        <div>
+          <label>Tanggal Lahir</label>
+          <input type="date" id="fBirthdate">
+        </div>
+        <div>
+          <label>Gender</label>
+          <select id="fGender">
+            <option value="">Pilih...</option>
+            <option value="male">Laki-laki</option>
+            <option value="female">Perempuan</option>
+            <option value="other">Lainnya</option>
+            <option value="prefer_not_to_say">Gak mau sebutin</option>
+          </select>
+        </div>
+      </div>
+
+      <label>Username Krunker</label>
+      <input type="text" id="fKrunker" placeholder="USN Krunker kamu (opsional)">
+
+      <button class="btn" id="btnSubmit">Buat Akun</button>
+      <div class="msg" id="formMsg"></div>
+    </div>
+
+    <div class="divider">atau</div>
+    <a href="login.html" class="btn ghost" style="display:block; text-align:center; text-decoration:none;">Sudah punya akun? Login</a>
+  </div>
+</div>
+
+<script src="supabase-client.js"></script>
+<script>
+let discordMeta = null; // { discord_id, discord_username }
+
+async function init() {
+  // Kalau balik dari OAuth redirect, sesi sementara Discord aktif di sini
+  const { data: { session } } = await sb.auth.getSession();
+  if (session && session.user.app_metadata.provider === "discord") {
+    const identity = session.user.identities.find(i => i.provider === "discord");
+    discordMeta = {
+      discord_id: session.user.user_metadata.provider_id || session.user.user_metadata.sub || identity?.id,
+      discord_username: session.user.user_metadata.full_name || session.user.user_metadata.name || session.user.user_metadata.custom_claims?.global_name || "Discord User",
+    };
+    // Sign out sesi sementara ini — akun asli dibuat via email/password di step 2
+    await sb.auth.signOut();
+    showStep2();
+  }
+}
+
+function showStep2() {
+  document.getElementById("step1").classList.remove("active");
+  document.getElementById("step2").classList.add("active");
+  document.getElementById("discordConnected").textContent =
+    "✓ Discord tersambung sebagai: " + discordMeta.discord_username;
+}
+
+document.getElementById("btnDiscord").addEventListener("click", async () => {
+  await sb.auth.signInWithOAuth({
+    provider: "discord",
+    options: { redirectTo: window.location.href }
+  });
+});
+
+document.getElementById("btnSubmit").addEventListener("click", async () => {
+  const msg = document.getElementById("formMsg");
+  msg.className = "msg"; msg.textContent = "";
+
+  const name = document.getElementById("fName").value.trim();
+  const username = document.getElementById("fUsername").value.trim();
+  const email = document.getElementById("fEmail").value.trim();
+  const password = document.getElementById("fPassword").value;
+  const birthdate = document.getElementById("fBirthdate").value;
+  const gender = document.getElementById("fGender").value;
+  const krunker = document.getElementById("fKrunker").value.trim();
+
+  if (!name || !username || !email || !password || !birthdate || !gender) {
+    msg.className = "msg error show"; msg.textContent = "Lengkapi semua field wajib dulu ya.";
+    return;
+  }
+  if (password.length < 6) {
+    msg.className = "msg error show"; msg.textContent = "Password minimal 6 karakter.";
+    return;
+  }
+
+  const btn = document.getElementById("btnSubmit");
+  btn.disabled = true; btn.textContent = "Memproses...";
+
+  const { data: signUpData, error: signUpError } = await sb.auth.signUp({ email, password });
+  if (signUpError) {
+    msg.className = "msg error show"; msg.textContent = signUpError.message;
+    btn.disabled = false; btn.textContent = "Buat Akun";
+    return;
+  }
+
+  // Kalau confirm email aktif, session belum langsung ada — coba sign in manual
+  let user = signUpData.user;
+  if (!signUpData.session) {
+    const { data: signInData, error: signInError } = await sb.auth.signInWithPassword({ email, password });
+    if (!signInError) user = signInData.user;
+  }
+
+  if (!user) {
+    msg.className = "msg ok show";
+    msg.textContent = "Akun dibuat! Cek email kamu buat verifikasi, lalu login.";
+    btn.disabled = false; btn.textContent = "Buat Akun";
+    return;
+  }
+
+  const { error: profileError } = await sb.from("profiles").insert({
+    id: user.id,
+    username,
+    display_name: name,
+    birthdate,
+    gender,
+    krunker_username: krunker || null,
+    discord_id: discordMeta?.discord_id || null,
+    discord_username: discordMeta?.discord_username || null,
+  });
+
+  if (profileError) {
+    msg.className = "msg error show";
+    msg.textContent = "Akun login dibuat tapi profil gagal disimpan: " + profileError.message;
+    btn.disabled = false; btn.textContent = "Buat Akun";
+    return;
+  }
+
+  window.location.href = "dashboard.html";
+});
+
+init();
+</script>
+</body>
+</html>
