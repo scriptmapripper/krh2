@@ -186,7 +186,6 @@ const EMBEDS = {
   'settings-generator': 'generator.html',
   'css-generator': 'css-generator.html',
   'crosshair-maker': 'crosshair-maker.html',
-  'crosshair-crosshairs': 'community/crosshairs.html',
   'scripts-krunkscript-generator': 'ks-generator.html',
   'scripts-krunkscript-docs-kr': 'kr-docs/index.html',
   'scripts-krunkscript-docs-swatdoge': 'https://krdocs.swatdoge.eu/',
