@@ -36,11 +36,11 @@ async function boot() {
 
   const nav = document.getElementById("topnav");
   nav.innerHTML = `
-    <span style="display:inline-flex; align-items:center; gap:6px; color:var(--text-1); font-size:13.5px; margin-right:4px;">${avatarHtml(profile, 26)} ${escapeHtml(profile.display_name)} ${roleBadge(profile.role)}</span>
     <a href="dashboard.html">Dashboard</a>
     <a href="admin.html">Admin Panel</a>
-    <a href="settings.html">Settings</a>
     <a href="#" id="btnLogout">Logout</a>
+    <span style="color:var(--text-1); font-size:13.5px; margin-left:4px;">${escapeHtml(profile.display_name)} ${roleBadge(profile.role)}</span>
+    <a href="settings.html" title="Account Settings" style="padding:0; border:none; background:none; display:inline-flex; align-items:center;">${avatarHtml(profile, 28)}</a>
   `;
   document.getElementById("btnLogout").addEventListener("click", async (e) => {
     e.preventDefault(); await sb.auth.signOut(); window.location.href = "../index.html";

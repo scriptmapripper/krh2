@@ -16,9 +16,10 @@
 
   <div class="card">
     <h1>Account Settings</h1>
-    <p class="subtitle">Manage your profile picture, account details, and password.</p>
+    <p class="subtitle">Manage your profile picture, personal info, email, and password.</p>
   </div>
 
+  <!-- Profile Picture -->
   <div class="card">
     <h2>Profile Picture</h2>
     <div style="display:flex; align-items:center; gap:16px; margin-bottom:6px;" id="avatarPreviewWrap"></div>
@@ -28,6 +29,7 @@
     <div class="msg" id="avatarMsg"></div>
   </div>
 
+  <!-- Profile Details -->
   <div class="card">
     <h2>Profile Details</h2>
     <label>Full Name</label>
@@ -43,8 +45,57 @@
     <div class="msg" id="profileMsg"></div>
   </div>
 
+  <!-- Personal Info: birthday + gender -->
+  <div class="card">
+    <h2>Personal Info</h2>
+    <div class="row2">
+      <div>
+        <label>Date of Birth</label>
+        <input type="date" id="fBirthdate">
+      </div>
+      <div>
+        <label>Gender</label>
+        <select id="fGender">
+          <option value="male">Male</option>
+          <option value="female">Female</option>
+          <option value="other">Other</option>
+          <option value="prefer_not_to_say">Prefer not to say</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn" id="btnSavePersonal">Save Changes</button>
+    <div class="msg" id="personalMsg"></div>
+  </div>
+
+  <!-- Email -->
+  <div class="card">
+    <h2>Email</h2>
+    <div id="emailDisplayView">
+      <label>Current Email</label>
+      <input type="email" id="fCurrentEmailDisplay" disabled>
+      <button class="btn ghost" id="btnEditEmail">Change Email</button>
+    </div>
+    <div id="emailEditView" style="display:none;">
+      <label>New Email</label>
+      <input type="email" id="fNewEmail" placeholder="new-email@example.com">
+
+      <label>Current Password</label>
+      <input type="password" id="fEmailPassword" placeholder="Confirm with your current password">
+
+      <div class="row2" style="margin-top:14px;">
+        <button class="btn ghost" id="btnCancelEmail" style="margin-top:0;">Cancel</button>
+        <button class="btn" id="btnSaveEmail" style="margin-top:0;">Save Email</button>
+      </div>
+    </div>
+    <div class="msg" id="emailMsg"></div>
+  </div>
+
+  <!-- Password -->
   <div class="card">
     <h2>Change Password</h2>
+    <label>Current Password</label>
+    <input type="password" id="fCurrentPassword" placeholder="Your current password">
+
     <label>New Password</label>
     <input type="password" id="fNewPassword" placeholder="Minimum 6 characters">
 
@@ -72,12 +123,11 @@ async function boot() {
   if (!myProfile) { window.location.href = "login.html"; return; }
 
   const nav = document.getElementById("topnav");
-  let links = `<span style="display:inline-flex; align-items:center; gap:6px; color:var(--text-1); font-size:13.5px; margin-right:4px;">${avatarHtml(myProfile, 26)} ${escapeHtml(myProfile.display_name)} ${roleBadge(myProfile.role)}</span>`;
-  links += `<a href="dashboard.html">Dashboard</a>`;
+  let links = `<a href="dashboard.html">Dashboard</a>`;
   if (myProfile.role === "admin" || myProfile.role === "developer") links += `<a href="admin.html">Admin Panel</a>`;
   if (myProfile.role === "developer") links += `<a href="developer.html">Developer Panel</a>`;
-  links += `<a href="settings.html">Settings</a>`;
   links += `<a href="#" id="btnLogout">Logout</a>`;
+  links += `<a href="settings.html" title="Account Settings" style="padding:0; border:none; background:none; display:inline-flex; align-items:center;">${avatarHtml(myProfile, 28)}</a>`;
   nav.innerHTML = links;
   document.getElementById("btnLogout").addEventListener("click", async (e) => {
     e.preventDefault(); await sb.auth.signOut(); window.location.href = "../index.html";
@@ -87,9 +137,12 @@ async function boot() {
   document.getElementById("fName").value = myProfile.display_name || "";
   document.getElementById("fUsername").value = myProfile.username || "";
   document.getElementById("fKrunker").value = myProfile.krunker_username || "";
+  document.getElementById("fBirthdate").value = myProfile.birthdate || "";
+  document.getElementById("fGender").value = myProfile.gender || "prefer_not_to_say";
+  document.getElementById("fCurrentEmailDisplay").value = me.email || "";
 
   document.getElementById("accountInfo").innerHTML =
-    `Email: ${escapeHtml(me.email || "-")}<br>Joined: ${formatDate(myProfile.created_at)}` +
+    `Joined: ${formatDate(myProfile.created_at)}` +
     (myProfile.discord_username ? `<br>Discord: ${escapeHtml(myProfile.discord_username)}` : "");
 }
 
@@ -99,6 +152,7 @@ function renderAvatarPreview() {
     `<span class="hint" style="margin-top:0;">Current profile picture</span>`;
 }
 
+// ---------- Avatar upload ----------
 document.getElementById("btnAvatarUpload").addEventListener("click", async () => {
   const msg = document.getElementById("avatarMsg");
   msg.className = "msg"; msg.textContent = "";
@@ -144,6 +198,7 @@ document.getElementById("btnAvatarUpload").addEventListener("click", async () =>
   btn.disabled = false; btn.textContent = "Upload New Picture";
 });
 
+// ---------- Profile details (name / username / krunker) ----------
 document.getElementById("btnSaveProfile").addEventListener("click", async () => {
   const msg = document.getElementById("profileMsg");
   msg.className = "msg"; msg.textContent = "";
@@ -175,29 +230,130 @@ document.getElementById("btnSaveProfile").addEventListener("click", async () => 
   msg.className = "msg ok show"; msg.textContent = "Profile updated!";
 });
 
+// ---------- Personal info (birthday / gender) ----------
+document.getElementById("btnSavePersonal").addEventListener("click", async () => {
+  const msg = document.getElementById("personalMsg");
+  msg.className = "msg"; msg.textContent = "";
+
+  const birthdate = document.getElementById("fBirthdate").value;
+  const gender = document.getElementById("fGender").value;
+
+  if (!birthdate) {
+    msg.className = "msg error show"; msg.textContent = "Date of birth is required.";
+    return;
+  }
+
+  const btn = document.getElementById("btnSavePersonal");
+  btn.disabled = true; btn.textContent = "Saving...";
+
+  const { error } = await sb.from("profiles").update({ birthdate, gender }).eq("id", me.id);
+
+  btn.disabled = false; btn.textContent = "Save Changes";
+
+  if (error) {
+    msg.className = "msg error show"; msg.textContent = error.message;
+    return;
+  }
+  myProfile.birthdate = birthdate;
+  myProfile.gender = gender;
+  msg.className = "msg ok show"; msg.textContent = "Personal info updated!";
+});
+
+// ---------- Email (Discord-style: show current, click to edit) ----------
+document.getElementById("btnEditEmail").addEventListener("click", () => {
+  document.getElementById("emailDisplayView").style.display = "none";
+  document.getElementById("emailEditView").style.display = "block";
+  document.getElementById("fNewEmail").value = me.email || "";
+});
+
+document.getElementById("btnCancelEmail").addEventListener("click", () => {
+  document.getElementById("emailEditView").style.display = "none";
+  document.getElementById("emailDisplayView").style.display = "block";
+  document.getElementById("fNewEmail").value = "";
+  document.getElementById("fEmailPassword").value = "";
+  document.getElementById("emailMsg").className = "msg";
+  document.getElementById("emailMsg").textContent = "";
+});
+
+document.getElementById("btnSaveEmail").addEventListener("click", async () => {
+  const msg = document.getElementById("emailMsg");
+  msg.className = "msg"; msg.textContent = "";
+
+  const newEmail = document.getElementById("fNewEmail").value.trim();
+  const currentPassword = document.getElementById("fEmailPassword").value;
+
+  if (!newEmail || !currentPassword) {
+    msg.className = "msg error show"; msg.textContent = "Fill in the new email and your current password.";
+    return;
+  }
+  if (newEmail === me.email) {
+    msg.className = "msg error show"; msg.textContent = "That's already your current email.";
+    return;
+  }
+
+  const btn = document.getElementById("btnSaveEmail");
+  btn.disabled = true; btn.textContent = "Verifying...";
+
+  // Verify current password by re-authenticating before allowing an email change
+  const { error: verifyError } = await sb.auth.signInWithPassword({ email: me.email, password: currentPassword });
+  if (verifyError) {
+    msg.className = "msg error show"; msg.textContent = "Incorrect current password.";
+    btn.disabled = false; btn.textContent = "Save Email";
+    return;
+  }
+
+  btn.textContent = "Updating...";
+  const { error: updateError } = await sb.auth.updateUser({ email: newEmail });
+
+  btn.disabled = false; btn.textContent = "Save Email";
+
+  if (updateError) {
+    msg.className = "msg error show"; msg.textContent = updateError.message;
+    return;
+  }
+
+  msg.className = "msg ok show";
+  msg.textContent = "Confirmation links sent to your old and new email. Click both to finish changing your email.";
+  document.getElementById("fEmailPassword").value = "";
+});
+
+// ---------- Password (requires current password) ----------
 document.getElementById("btnChangePassword").addEventListener("click", async () => {
   const msg = document.getElementById("passwordMsg");
   msg.className = "msg"; msg.textContent = "";
 
+  const currentPw = document.getElementById("fCurrentPassword").value;
   const pw1 = document.getElementById("fNewPassword").value;
   const pw2 = document.getElementById("fConfirmPassword").value;
 
-  if (!pw1 || !pw2) {
-    msg.className = "msg error show"; msg.textContent = "Fill in both password fields.";
+  if (!currentPw || !pw1 || !pw2) {
+    msg.className = "msg error show"; msg.textContent = "Fill in your current password and the new password twice.";
     return;
   }
   if (pw1.length < 6) {
-    msg.className = "msg error show"; msg.textContent = "Password must be at least 6 characters.";
+    msg.className = "msg error show"; msg.textContent = "New password must be at least 6 characters.";
     return;
   }
   if (pw1 !== pw2) {
-    msg.className = "msg error show"; msg.textContent = "Passwords do not match.";
+    msg.className = "msg error show"; msg.textContent = "New passwords do not match.";
+    return;
+  }
+  if (pw1 === currentPw) {
+    msg.className = "msg error show"; msg.textContent = "New password must be different from your current password.";
     return;
   }
 
   const btn = document.getElementById("btnChangePassword");
-  btn.disabled = true; btn.textContent = "Updating...";
+  btn.disabled = true; btn.textContent = "Verifying...";
 
+  const { error: verifyError } = await sb.auth.signInWithPassword({ email: me.email, password: currentPw });
+  if (verifyError) {
+    msg.className = "msg error show"; msg.textContent = "Current password is incorrect.";
+    btn.disabled = false; btn.textContent = "Update Password";
+    return;
+  }
+
+  btn.textContent = "Updating...";
   const { error } = await sb.auth.updateUser({ password: pw1 });
 
   btn.disabled = false; btn.textContent = "Update Password";
@@ -206,6 +362,7 @@ document.getElementById("btnChangePassword").addEventListener("click", async () 
     msg.className = "msg error show"; msg.textContent = error.message;
     return;
   }
+  document.getElementById("fCurrentPassword").value = "";
   document.getElementById("fNewPassword").value = "";
   document.getElementById("fConfirmPassword").value = "";
   msg.className = "msg ok show"; msg.textContent = "Password updated!";

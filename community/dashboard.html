@@ -54,15 +54,16 @@ async function boot() {
   if (!profile) { window.location.href = "login.html"; return; }
 
   const nav = document.getElementById("topnav");
-  let links = `<span style="display:inline-flex; align-items:center; gap:6px; color:var(--text-1); font-size:13.5px; margin-right:4px;">${avatarHtml(profile, 26)} Hi, ${escapeHtml(profile.display_name)} ${roleBadge(profile.role)}</span>`;
+  let links = `<a href="dashboard.html">Dashboard</a>`;
   if (profile.role === "admin" || profile.role === "developer") {
     links += `<a href="admin.html">Admin Panel</a>`;
   }
   if (profile.role === "developer") {
     links += `<a href="developer.html">Developer Panel</a>`;
   }
-  links += `<a href="settings.html">Settings</a>`;
   links += `<a href="#" id="btnLogout">Logout</a>`;
+  links += `<span style="color:var(--text-1); font-size:13.5px; margin-left:4px;">Hi, ${escapeHtml(profile.display_name)} ${roleBadge(profile.role)}</span>`;
+  links += `<a href="settings.html" title="Account Settings" style="padding:0; border:none; background:none; display:inline-flex; align-items:center;">${avatarHtml(profile, 28)}</a>`;
   nav.innerHTML = links;
   document.getElementById("btnLogout").addEventListener("click", async (e) => {
     e.preventDefault();
