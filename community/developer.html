@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Panel Developer — Krunker Resource Hub</title>
+<title>Developer Panel — Krunker Resource Hub</title>
 <link rel="stylesheet" href="community.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -15,14 +15,14 @@
   </div>
 
   <div class="card">
-    <h1>Panel Developer</h1>
-    <p class="subtitle">Angkat atau turunkan Admin. Role Developer sendiri cuma bisa diubah lewat SQL (lihat sql/schema.sql).</p>
+    <h1>Developer Panel</h1>
+    <p class="subtitle">Promote or demote Admins. The Developer role itself can only be changed via SQL (see sql/schema.sql).</p>
   </div>
 
   <div class="card">
-    <h2>Semua User</h2>
-    <input type="text" id="search" placeholder="Cari username / nama..." style="margin-bottom:16px;">
-    <div id="userList"><div class="empty">Memuat...</div></div>
+    <h2>All Users</h2>
+    <input type="text" id="search" placeholder="Search username / name..." style="margin-bottom:16px;">
+    <div id="userList"><div class="empty">Loading...</div></div>
   </div>
 </div>
 
@@ -38,7 +38,7 @@ async function boot() {
   nav.innerHTML = `
     <span style="color:var(--text-1); font-size:13.5px; margin-right:4px;">${escapeHtml(profile.display_name)} ${roleBadge(profile.role)}</span>
     <a href="dashboard.html">Dashboard</a>
-    <a href="admin.html">Panel Admin</a>
+    <a href="admin.html">Admin Panel</a>
     <a href="#" id="btnLogout">Logout</a>
   `;
   document.getElementById("btnLogout").addEventListener("click", async (e) => {
@@ -52,7 +52,7 @@ async function boot() {
 async function loadUsers() {
   const { data, error } = await sb.from("profiles").select("*").order("created_at", { ascending: false });
   const el = document.getElementById("userList");
-  if (error) { el.innerHTML = `<div class="empty">Gagal memuat: ${escapeHtml(error.message)}</div>`; return; }
+  if (error) { el.innerHTML = `<div class="empty">Failed to load: ${escapeHtml(error.message)}</div>`; return; }
   allUsers = data;
   render();
 }
@@ -62,7 +62,7 @@ function render() {
   const el = document.getElementById("userList");
   let rows = allUsers;
   if (q) rows = rows.filter(u => u.username.toLowerCase().includes(q) || u.display_name.toLowerCase().includes(q));
-  if (!rows.length) { el.innerHTML = `<div class="empty">Gak ada user yang cocok.</div>`; return; }
+  if (!rows.length) { el.innerHTML = `<div class="empty">No matching users.</div>`; return; }
 
   el.innerHTML = rows.map(u => `
     <div class="post-item">
@@ -71,12 +71,12 @@ function render() {
         ${roleBadge(u.role)}
         ${u.discord_username ? `<span>Discord: ${escapeHtml(u.discord_username)}</span>` : ""}
         ${u.krunker_username ? `<span>Krunker: ${escapeHtml(u.krunker_username)}</span>` : ""}
-        <span>Gabung ${formatDate(u.created_at)}</span>
+        <span>Joined ${formatDate(u.created_at)}</span>
       </div>
       <div class="post-actions">
-        ${u.role === 'developer' ? `<span class="hint">Role developer cuma bisa diubah lewat SQL.</span>` : ""}
-        ${u.role === 'user' ? `<button class="btn small green" onclick="setRole('${u.id}','admin')">Jadikan Admin</button>` : ""}
-        ${u.role === 'admin' ? `<button class="btn small danger" onclick="setRole('${u.id}','user')">Cabut Admin</button>` : ""}
+        ${u.role === 'developer' ? `<span class="hint">Developer role can only be changed via SQL.</span>` : ""}
+        ${u.role === 'user' ? `<button class="btn small green" onclick="setRole('${u.id}','admin')">Make Admin</button>` : ""}
+        ${u.role === 'admin' ? `<button class="btn small danger" onclick="setRole('${u.id}','user')">Revoke Admin</button>` : ""}
       </div>
     </div>
   `).join("");
@@ -84,7 +84,7 @@ function render() {
 
 async function setRole(id, role) {
   const { error } = await sb.from("profiles").update({ role }).eq("id", id);
-  if (error) { alert("Gagal: " + error.message); return; }
+  if (error) { alert("Failed: " + error.message); return; }
   loadUsers();
 }
 

@@ -61,5 +61,5 @@ function escapeHtml(str) {
 
 function formatDate(iso) {
   const d = new Date(iso);
-  return d.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
+  return d.toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" });
 }

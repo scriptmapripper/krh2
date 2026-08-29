@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -15,19 +15,19 @@
 
   <div class="card">
     <h1>Login</h1>
-    <p class="subtitle">Masuk buat bisa posting, edit, dan hapus post kamu.</p>
+    <p class="subtitle">Log in to post, edit, and delete your posts.</p>
 
     <label>Email</label>
-    <input type="email" id="fEmail" placeholder="email@contoh.com">
+    <input type="email" id="fEmail" placeholder="email@example.com">
 
     <label>Password</label>
-    <input type="password" id="fPassword" placeholder="Password kamu">
+    <input type="password" id="fPassword" placeholder="Your password">
 
     <button class="btn" id="btnLogin">Login</button>
     <div class="msg" id="msg"></div>
 
-    <div class="divider">atau</div>
-    <a href="signup.html" class="btn ghost" style="display:block; text-align:center;">Belum punya akun? Daftar</a>
+    <div class="divider">or</div>
+    <a href="signup.html" class="btn ghost" style="display:block; text-align:center;">Don't have an account? Sign Up</a>
   </div>
 </div>
 
@@ -38,7 +38,7 @@ document.getElementById("btnLogin").addEventListener("click", async () => {
   const email = document.getElementById("fEmail").value.trim();
   const password = document.getElementById("fPassword").value;
   if (!email || !password) {
-    msg.className = "msg error show"; msg.textContent = "Isi email & password dulu.";
+    msg.className = "msg error show"; msg.textContent = "Please fill in email & password.";
     return;
   }
   const { error } = await sb.auth.signInWithPassword({ email, password });

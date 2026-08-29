@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Panel Admin — Krunker Resource Hub</title>
+<title>Admin Panel — Krunker Resource Hub</title>
 <link rel="stylesheet" href="community.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -15,26 +15,26 @@
   </div>
 
   <div class="card">
-    <h1>Panel Admin</h1>
-    <p class="subtitle">Kelola semua post: publish, unpublish, atau hapus.</p>
+    <h1>Admin Panel</h1>
+    <p class="subtitle">Manage all posts: publish, unpublish, or delete.</p>
   </div>
 
   <div class="card">
-    <h2>Semua Post</h2>
+    <h2>All Posts</h2>
     <div class="row2" style="margin-bottom:16px;">
       <select id="filterStatus">
-        <option value="all">Semua status</option>
-        <option value="published">Published saja</option>
-        <option value="draft">Draft saja</option>
+        <option value="all">All statuses</option>
+        <option value="published">Published only</option>
+        <option value="draft">Draft only</option>
       </select>
       <select id="filterCategory">
-        <option value="all">Semua kategori</option>
+        <option value="all">All categories</option>
         <option value="general">General</option>
         <option value="crosshair">Crosshair</option>
       </select>
-      <input type="text" id="filterSearch" placeholder="Cari judul...">
+      <input type="text" id="filterSearch" placeholder="Search title...">
     </div>
-    <div id="allPosts"><div class="empty">Memuat...</div></div>
+    <div id="allPosts"><div class="empty">Loading...</div></div>
   </div>
 </div>
 
@@ -49,7 +49,7 @@ async function boot() {
   const nav = document.getElementById("topnav");
   let links = `<span style="color:var(--text-1); font-size:13.5px; margin-right:4px;">${escapeHtml(profile.display_name)} ${roleBadge(profile.role)}</span>`;
   links += `<a href="dashboard.html">Dashboard</a>`;
-  if (profile.role === "developer") links += `<a href="developer.html">Panel Developer</a>`;
+  if (profile.role === "developer") links += `<a href="developer.html">Developer Panel</a>`;
   links += `<a href="#" id="btnLogout">Logout</a>`;
   nav.innerHTML = links;
   document.getElementById("btnLogout").addEventListener("click", async (e) => {
@@ -68,7 +68,7 @@ async function loadAll() {
     .select("*, profiles!posts_author_id_fkey(username,display_name)")
     .order("created_at", { ascending: false });
   const el = document.getElementById("allPosts");
-  if (error) { el.innerHTML = `<div class="empty">Gagal memuat: ${escapeHtml(error.message)}</div>`; return; }
+  if (error) { el.innerHTML = `<div class="empty">Failed to load: ${escapeHtml(error.message)}</div>`; return; }
   allData = data;
   render();
 }
@@ -83,7 +83,7 @@ function render() {
   if (category !== "all") rows = rows.filter(p => p.category === category);
   if (search) rows = rows.filter(p => p.title.toLowerCase().includes(search));
 
-  if (!rows.length) { el.innerHTML = `<div class="empty">Gak ada post yang cocok.</div>`; return; }
+  if (!rows.length) { el.innerHTML = `<div class="empty">No matching posts.</div>`; return; }
 
   el.innerHTML = rows.map(p => `
     <div class="post-item">
@@ -91,7 +91,7 @@ function render() {
       <div class="meta">
         <span class="status-pill ${p.status === 'published' ? 'status-published' : 'status-draft'}">${p.status}</span>
         ${p.category === 'crosshair' ? '<span class="role-badge role-admin">Crosshair</span>' : ''}
-        <span>oleh ${escapeHtml(p.profiles?.display_name || "?")} (@${escapeHtml(p.profiles?.username || "-")})</span>
+        <span>by ${escapeHtml(p.profiles?.display_name || "?")} (@${escapeHtml(p.profiles?.username || "-")})</span>
         <span>${formatDate(p.created_at)}</span>
       </div>
       <div class="content">${escapeHtml(p.content)}</div>
@@ -99,7 +99,7 @@ function render() {
         ${p.status === 'draft'
           ? `<button class="btn small green" onclick="setStatus('${p.id}','published')">Publish</button>`
           : `<button class="btn small ghost" onclick="setStatus('${p.id}','draft')">Unpublish</button>`}
-        <button class="btn small danger" onclick="removePost('${p.id}')">Hapus</button>
+        <button class="btn small danger" onclick="removePost('${p.id}')">Delete</button>
       </div>
     </div>
   `).join("");
@@ -111,7 +111,7 @@ async function setStatus(id, status) {
 }
 
 async function removePost(id) {
-  if (!confirm("Hapus post ini secara permanen?")) return;
+  if (!confirm("Permanently delete this post?")) return;
   await sb.from("posts").delete().eq("id", id);
   loadAll();
 }

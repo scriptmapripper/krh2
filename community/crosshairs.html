@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -16,31 +16,31 @@
 
   <div class="card">
     <h1>Crosshairs</h1>
-    <p class="subtitle">Crosshair buatan komunitas. Bikin punya kamu sendiri di
+    <p class="subtitle">Community-made crosshairs. Build your own at
       <a href="../crosshair-maker.html" style="color:var(--blue-glow); text-decoration:underline;">Custom Crosshair Maker</a>,
-      terus post di sini biar orang lain bisa pakai.</p>
+      then post it here so others can use it.</p>
   </div>
 
   <div class="card" id="submitCard" style="display:none;">
-    <h2>Post Crosshair Kamu</h2>
-    <label>Judul</label>
-    <input type="text" id="pTitle" placeholder="Nama crosshair kamu">
-    <label>Code Crosshair</label>
-    <textarea id="pContent" placeholder="Paste code dari Crosshair Maker di sini, atau tulis deskripsinya"></textarea>
-    <p class="hint">Code dari Custom Crosshair Maker bisa langsung di-paste di sini.</p>
+    <h2>Post Your Crosshair</h2>
+    <label>Title</label>
+    <input type="text" id="pTitle" placeholder="Your crosshair name">
+    <label>Crosshair Code</label>
+    <textarea id="pContent" placeholder="Paste the code from Crosshair Maker here, or write a description"></textarea>
+    <p class="hint">Code from the Custom Crosshair Maker can be pasted directly here.</p>
     <button class="btn green" id="btnPublish">Publish Crosshair</button>
     <div class="msg" id="createMsg"></div>
   </div>
 
   <div class="card" id="loginPrompt">
-    <p class="subtitle" style="margin-bottom:14px;">Login dulu buat bisa post crosshair kamu sendiri.</p>
+    <p class="subtitle" style="margin-bottom:14px;">Log in to post your own crosshair.</p>
     <a href="login.html" class="btn ghost" style="display:block; text-align:center; margin-bottom:10px;">Login</a>
-    <a href="signup.html" class="btn" style="display:block; text-align:center;">Daftar</a>
+    <a href="signup.html" class="btn" style="display:block; text-align:center;">Sign Up</a>
   </div>
 
   <div class="card">
-    <h2>Semua Crosshair</h2>
-    <div id="feed"><div class="empty">Memuat...</div></div>
+    <h2>All Crosshairs</h2>
+    <div id="feed"><div class="empty">Loading...</div></div>
   </div>
 </div>
 
@@ -56,8 +56,8 @@ async function boot() {
     const profile = await getMyProfile();
     let links = `<span style="color:var(--text-1); font-size:13.5px; margin-right:4px;">${escapeHtml(profile.display_name)} ${roleBadge(profile.role)}</span>`;
     links += `<a href="dashboard.html">Dashboard</a>`;
-    if (profile.role === "admin" || profile.role === "developer") links += `<a href="admin.html">Panel Admin</a>`;
-    if (profile.role === "developer") links += `<a href="developer.html">Panel Developer</a>`;
+    if (profile.role === "admin" || profile.role === "developer") links += `<a href="admin.html">Admin Panel</a>`;
+    if (profile.role === "developer") links += `<a href="developer.html">Developer Panel</a>`;
     links += `<a href="#" id="btnLogout">Logout</a>`;
     nav.innerHTML = links;
     document.getElementById("btnLogout").addEventListener("click", async (e) => {
@@ -74,7 +74,7 @@ async function boot() {
       document.getElementById("pTitle").focus();
     }
   } else {
-    nav.innerHTML = `<a href="login.html">Login</a><a href="signup.html">Daftar</a>`;
+    nav.innerHTML = `<a href="login.html">Login</a><a href="signup.html">Sign Up</a>`;
   }
 
   loadFeed();
@@ -85,7 +85,7 @@ document.getElementById("btnPublish")?.addEventListener("click", async () => {
   const title = document.getElementById("pTitle").value.trim();
   const content = document.getElementById("pContent").value.trim();
   if (!title || !content) {
-    msg.className = "msg error show"; msg.textContent = "Judul & code wajib diisi.";
+    msg.className = "msg error show"; msg.textContent = "Title & code are required.";
     return;
   }
   const { error } = await sb.from("posts").insert({
@@ -95,7 +95,7 @@ document.getElementById("btnPublish")?.addEventListener("click", async () => {
     msg.className = "msg error show"; msg.textContent = error.message;
     return;
   }
-  msg.className = "msg ok show"; msg.textContent = "Crosshair kamu udah dipost!";
+  msg.className = "msg ok show"; msg.textContent = "Your crosshair has been posted!";
   document.getElementById("pTitle").value = "";
   document.getElementById("pContent").value = "";
   loadFeed();
@@ -110,14 +110,14 @@ async function loadFeed() {
     .eq("category", "crosshair")
     .order("created_at", { ascending: false })
     .limit(50);
-  if (error) { el.innerHTML = `<div class="empty">Gagal memuat: ${escapeHtml(error.message)}</div>`; return; }
-  if (!data.length) { el.innerHTML = `<div class="empty">Belum ada crosshair yang dipost. Jadi yang pertama!</div>`; return; }
+  if (error) { el.innerHTML = `<div class="empty">Failed to load: ${escapeHtml(error.message)}</div>`; return; }
+  if (!data.length) { el.innerHTML = `<div class="empty">No crosshairs posted yet. Be the first!</div>`; return; }
 
   el.innerHTML = data.map(p => `
     <div class="post-item">
       <div class="title">${escapeHtml(p.title)}</div>
       <div class="meta">
-        <span>oleh ${escapeHtml(p.profiles?.display_name || "?")}</span>
+        <span>by ${escapeHtml(p.profiles?.display_name || "?")}</span>
         <span>${formatDate(p.created_at)}</span>
       </div>
       <div class="content">${escapeHtml(p.content)}</div>
@@ -137,7 +137,7 @@ async function copyCode(btn, id) {
     btn.textContent = "Copied!";
     setTimeout(() => { btn.textContent = old; }, 1500);
   } catch(e) {
-    alert("Gagal copy otomatis. Code: " + code);
+    alert("Auto-copy failed. Code: " + code);
   }
 }
 
