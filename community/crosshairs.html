@@ -38,11 +38,6 @@
     <a href="signup.html" class="btn" style="display:block; text-align:center;">Sign Up</a>
   </div>
 
-  <div class="card">
-    <h2>All Crosshairs</h2>
-    <div id="feed"><div class="empty">Loading...</div></div>
-  </div>
-
   <div class="card" id="logoutCard" style="display:none;">
     <button class="btn logout-btn" id="btnLogout">Logout</button>
   </div>
@@ -106,34 +101,17 @@ document.getElementById("btnPublish")?.addEventListener("click", async () => {
   document.getElementById("pTitle").value = "";
   document.getElementById("pContent").value = "";
   loadFeed();
+  try {
+    if (window.parent && typeof window.parent.loadCrosshairGallery === "function") {
+      window.parent.loadCrosshairGallery("crosshair");
+    }
+  } catch(e) { /* cross-origin or not embedded — ignore */ }
 });
 
 async function loadFeed() {
-  const el = document.getElementById("feed");
-  const { data, error } = await sb
-    .from("posts")
-    .select("*, profiles!posts_author_id_fkey(username,display_name,avatar_url)")
-    .eq("status", "published")
-    .eq("category", "crosshair")
-    .order("created_at", { ascending: false })
-    .limit(50);
-  if (error) { el.innerHTML = `<div class="empty">Failed to load: ${escapeHtml(error.message)}</div>`; return; }
-  if (!data.length) { el.innerHTML = `<div class="empty">No crosshairs posted yet. Be the first!</div>`; return; }
-
-  el.innerHTML = data.map(p => `
-    <div class="post-item">
-      <div class="title">${escapeHtml(p.title)}</div>
-      <div class="meta">
-        <span style="display:inline-flex; align-items:center; gap:5px;">${avatarHtml(p.profiles, 16)} by ${escapeHtml(p.profiles?.display_name || "?")}</span>
-        <span>${formatDate(p.created_at)}</span>
-      </div>
-      <div class="content">${escapeHtml(p.content)}</div>
-      <div class="post-actions">
-        <button class="btn small ghost" onclick="copyCode(this,'${p.id}')" data-code="${encodeURIComponent(p.content)}">Copy Code</button>
-        <a class="btn small ghost" href="../crosshair-maker.html?code=${encodeURIComponent(p.content)}" style="text-decoration:none; display:inline-flex; align-items:center;">Load in Maker</a>
-      </div>
-    </div>
-  `).join("");
+  /* The list view now lives in the "Community Crosshairs" gallery on the
+     main placeholder page — publishing here still writes to the posts
+     table with category "crosshair", it's just not re-listed here. */
 }
 
 async function copyCode(btn, id) {

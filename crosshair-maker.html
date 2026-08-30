@@ -104,6 +104,14 @@
     <div class="panel">
       <h2>Shape</h2>
       <div class="field">
+        <label>Style</label>
+        <select id="cShape" style="width:100%; padding:9px 10px; background:var(--panel2); color:var(--txt); border:1px solid var(--line); border-radius:8px; font-family:inherit; font-size:13.5px;">
+          <option value="cross">Cross</option>
+          <option value="circle">Circle</option>
+          <option value="square">Square</option>
+        </select>
+      </div>
+      <div class="field">
         <label>Color <span class="val" id="vColor"></span></label>
         <div class="row"><input type="color" id="cColor" value="#2fd06a"></div>
       </div>
@@ -175,6 +183,7 @@
         <button class="btn ghost" id="btnCopy" style="margin-top:0;">Copy Code</button>
         <button class="btn ghost" id="btnReset" style="margin-top:0;">Reset</button>
       </div>
+      <button class="btn ghost" id="btnDownload">Download PNG</button>
       <button class="btn primary" id="btnPost">Post this Crosshair</button>
       <div class="msg" id="exportMsg"></div>
       <p style="font-size:11.5px;color:var(--faint);margin-top:10px;">
@@ -187,6 +196,7 @@
 
 <script>
 const els = {
+  shape: document.getElementById('cShape'),
   color: document.getElementById('cColor'),
   thickness: document.getElementById('cThickness'),
   length: document.getElementById('cLength'),
@@ -218,15 +228,18 @@ const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 
 const PRESETS = [
-  { name:'Classic Green', v:{color:'#2fd06a',thickness:2.5,length:10,gap:4,opacity:1,tstyle:false,dotOn:true,dotSize:3,dotOpacity:1,outlineOn:true,outlineColor:'#000000',outlineWidth:1} },
-  { name:'Thin Cyan', v:{color:'#25d5e8',thickness:1.5,length:8,gap:6,opacity:0.9,tstyle:false,dotOn:false,dotSize:2,dotOpacity:1,outlineOn:true,outlineColor:'#000000',outlineWidth:1} },
-  { name:'Dot Only', v:{color:'#ffffff',thickness:2,length:0,gap:0,opacity:1,tstyle:false,dotOn:true,dotSize:4,dotOpacity:1,outlineOn:true,outlineColor:'#000000',outlineWidth:1.5} },
-  { name:'T-Style Red', v:{color:'#f04545',thickness:2.5,length:12,gap:5,opacity:1,tstyle:true,dotOn:true,dotSize:2.5,dotOpacity:1,outlineOn:true,outlineColor:'#000000',outlineWidth:1} },
-  { name:'Bold Orange', v:{color:'#f5a524',thickness:4,length:14,gap:3,opacity:1,tstyle:false,dotOn:false,dotSize:3,dotOpacity:1,outlineOn:false,outlineColor:'#000000',outlineWidth:1} },
+  { name:'Classic Green', v:{shape:'cross',color:'#2fd06a',thickness:2.5,length:10,gap:4,opacity:1,tstyle:false,dotOn:true,dotSize:3,dotOpacity:1,outlineOn:true,outlineColor:'#000000',outlineWidth:1} },
+  { name:'Thin Cyan', v:{shape:'cross',color:'#25d5e8',thickness:1.5,length:8,gap:6,opacity:0.9,tstyle:false,dotOn:false,dotSize:2,dotOpacity:1,outlineOn:true,outlineColor:'#000000',outlineWidth:1} },
+  { name:'Dot Only', v:{shape:'cross',color:'#ffffff',thickness:2,length:0,gap:0,opacity:1,tstyle:false,dotOn:true,dotSize:4,dotOpacity:1,outlineOn:true,outlineColor:'#000000',outlineWidth:1.5} },
+  { name:'T-Style Red', v:{shape:'cross',color:'#f04545',thickness:2.5,length:12,gap:5,opacity:1,tstyle:true,dotOn:true,dotSize:2.5,dotOpacity:1,outlineOn:true,outlineColor:'#000000',outlineWidth:1} },
+  { name:'Bold Orange', v:{shape:'cross',color:'#f5a524',thickness:4,length:14,gap:3,opacity:1,tstyle:false,dotOn:false,dotSize:3,dotOpacity:1,outlineOn:false,outlineColor:'#000000',outlineWidth:1} },
+  { name:'Circle', v:{shape:'circle',color:'#2fd06a',thickness:2,length:12,gap:0,opacity:1,tstyle:false,dotOn:true,dotSize:2,dotOpacity:1,outlineOn:true,outlineColor:'#000000',outlineWidth:1} },
+  { name:'Square', v:{shape:'square',color:'#25d5e8',thickness:2,length:10,gap:0,opacity:1,tstyle:false,dotOn:false,dotSize:2,dotOpacity:1,outlineOn:true,outlineColor:'#000000',outlineWidth:1} },
 ];
 
 function getState(){
   return {
+    shape: els.shape.value,
     color: els.color.value,
     thickness: parseFloat(els.thickness.value),
     length: parseFloat(els.length.value),
@@ -243,6 +256,7 @@ function getState(){
 }
 
 function setState(v){
+  els.shape.value = v.shape || 'cross';
   els.color.value = v.color;
   els.thickness.value = v.thickness;
   els.length.value = v.length;
@@ -289,7 +303,7 @@ function update(){
   document.getElementById('codeOut').value = encodeCode(s);
 }
 
-Object.values(els).forEach(el => el.addEventListener('input', update));
+Object.values(els).forEach(el => { el.addEventListener('input', update); el.addEventListener('change', update); });
 
 document.getElementById('presets').innerHTML = PRESETS.map((p,i) =>
   `<button class="preset-btn" data-i="${i}">${p.name}</button>`).join('');
@@ -314,6 +328,14 @@ document.getElementById('btnPost').addEventListener('click', () => {
   const code = document.getElementById('codeOut').value;
   const target = 'community/crosshairs.html?code=' + encodeURIComponent(code);
   window.top.location.href = target;
+});
+
+document.getElementById('btnDownload').addEventListener('click', () => {
+  const link = document.createElement('a');
+  link.download = 'crosshair.png';
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+  showMsg('ok', 'PNG downloaded!');
 });
 
 function showMsg(type, text){

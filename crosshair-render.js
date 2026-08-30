@@ -28,7 +28,30 @@ function renderCrosshairToCanvas(canvas, s) {
   ctx.clearRect(0, 0, w, h);
   ctx.lineCap = 'round';
 
-  if (s.length > 0) {
+  const shape = s.shape || 'cross';
+
+  if (shape === 'circle' && s.length > 0) {
+    if (s.outlineOn) {
+      ctx.beginPath(); ctx.arc(cx, cy, s.length, 0, Math.PI * 2);
+      ctx.strokeStyle = s.outlineColor; ctx.lineWidth = s.thickness + s.outlineWidth * 2;
+      ctx.globalAlpha = s.opacity; ctx.stroke();
+    }
+    const c = chrHexToRgb(s.color);
+    ctx.beginPath(); ctx.arc(cx, cy, s.length, 0, Math.PI * 2);
+    ctx.strokeStyle = `rgba(${c.r},${c.g},${c.b},1)`; ctx.lineWidth = s.thickness;
+    ctx.globalAlpha = s.opacity; ctx.stroke(); ctx.globalAlpha = 1;
+  } else if (shape === 'square' && s.length > 0) {
+    if (s.outlineOn) {
+      ctx.strokeStyle = s.outlineColor; ctx.lineWidth = s.thickness + s.outlineWidth * 2;
+      ctx.globalAlpha = s.opacity;
+      ctx.strokeRect(cx - s.length, cy - s.length, s.length * 2, s.length * 2);
+    }
+    const c = chrHexToRgb(s.color);
+    ctx.strokeStyle = `rgba(${c.r},${c.g},${c.b},1)`; ctx.lineWidth = s.thickness;
+    ctx.globalAlpha = s.opacity;
+    ctx.strokeRect(cx - s.length, cy - s.length, s.length * 2, s.length * 2);
+    ctx.globalAlpha = 1;
+  } else if (s.length > 0) {
     if (!s.tstyle) chrDrawLine(ctx, cx, cy - s.gap - s.length, cx, cy - s.gap, s);
     chrDrawLine(ctx, cx, cy + s.gap, cx, cy + s.gap + s.length, s);
     chrDrawLine(ctx, cx - s.gap - s.length, cy, cx - s.gap, cy, s);

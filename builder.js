@@ -629,6 +629,7 @@ async function loadCrosshairGallery(cat){
         <div class="gallery-meta">by ${escapeHtml(p.profiles?.display_name || '?')} · ${formatDate(p.created_at)}</div>
         <div class="gallery-actions">
           <button class="gallery-btn" data-action="copy" data-code="${encodeURIComponent(p.content)}">Copy Code</button>
+          <button class="gallery-btn" data-action="download" data-code="${encodeURIComponent(p.content)}" data-name="${escapeHtml(p.title)}">Download PNG</button>
           <a class="gallery-btn" href="crosshair-maker.html?code=${encodeURIComponent(p.content)}">Load in Maker</a>
         </div>
       </div>
@@ -658,6 +659,22 @@ async function loadCrosshairGallery(cat){
           btn.textContent = 'Copied!';
           setTimeout(() => { btn.textContent = old; }, 1500);
         } catch(e) { alert('Auto-copy failed. Code: ' + code); }
+      });
+    });
+
+    container.querySelectorAll('[data-action="download"]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const code = decodeURIComponent(btn.getAttribute('data-code'));
+        const name = btn.getAttribute('data-name') || 'crosshair';
+        const state = typeof decodeCrosshairCode === 'function' ? decodeCrosshairCode(code) : null;
+        if(!state){ alert('Could not decode this crosshair code.'); return; }
+        const exportCanvas = document.createElement('canvas');
+        exportCanvas.width = 400; exportCanvas.height = 400;
+        renderCrosshairToCanvas(exportCanvas, state);
+        const link = document.createElement('a');
+        link.download = name.replace(/[^a-z0-9-_]+/gi, '_').toLowerCase() + '.png';
+        link.href = exportCanvas.toDataURL('image/png');
+        link.click();
       });
     });
   } catch(e) {
