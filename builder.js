@@ -500,6 +500,12 @@ const POST_LINKS = {
   'crosshair-crosshairs': 'community/crosshairs.html',
 };
 
+/* Leaf nodes that should show a live-rendered community gallery
+   (decoded from posted codes) directly on the placeholder page. */
+const GALLERY_SECTIONS = {
+  'crosshair-crosshairs': { cat: 'crosshair' },
+};
+
 function renderContent(){
   const path = fullPath(selectedId) || [findMain(activeMainId)];
   const node = path[path.length - 1];
@@ -569,6 +575,12 @@ function renderContent(){
         </button>`).join('')}</div>` : ''}
     ${POST_LINKS[node.id] ? `<button class="btn-createpost" id="btnCreatePost">Create Post</button>` : ''}
     <div class="status-note">This section mirrors the site mindmap — structure only, content to be filled in as the hub is built out.</div>
+    ${GALLERY_SECTIONS[node.id] ? `
+      <div class="gallery-wrap">
+        <h3 class="gallery-heading">Community Crosshairs</h3>
+        <div class="crosshair-gallery" id="crosshairGallery"><div class="gallery-empty">Loading...</div></div>
+      </div>
+    ` : ''}
   `;
 
   if(POST_LINKS[node.id]){
@@ -576,6 +588,10 @@ function renderContent(){
       manualEmbedNodeId = node.id;
       renderContent();
     });
+  }
+
+  if(GALLERY_SECTIONS[node.id]){
+    loadCrosshairGallery(GALLERY_SECTIONS[node.id].cat);
   }
 
   el.querySelectorAll('.child-card').forEach(card => {
@@ -587,6 +603,66 @@ function renderContent(){
       renderAll();
     });
   });
+}
+
+async function loadCrosshairGallery(cat){
+  const container = document.getElementById('crosshairGallery');
+  if(!container || typeof sb === 'undefined') return;
+
+  try {
+    const { data, error } = await sb
+      .from('posts')
+      .select('*, profiles!posts_author_id_fkey(username,display_name,avatar_url)')
+      .eq('status', 'published')
+      .eq('category', cat)
+      .order('created_at', { ascending: false })
+      .limit(24);
+
+    if(error){ container.innerHTML = `<div class="gallery-empty">Failed to load: ${escapeHtml(error.message)}</div>`; return; }
+    if(!data.length){ container.innerHTML = `<div class="gallery-empty">Nothing posted here yet. Be the first!</div>`; return; }
+    if(document.getElementById('crosshairGallery') !== container) return; /* navigated away */
+
+    container.innerHTML = data.map((p, i) => `
+      <div class="gallery-card">
+        <canvas class="gallery-canvas" id="ghCanvas${i}" width="120" height="120"></canvas>
+        <div class="gallery-title">${escapeHtml(p.title)}</div>
+        <div class="gallery-meta">by ${escapeHtml(p.profiles?.display_name || '?')} · ${formatDate(p.created_at)}</div>
+        <div class="gallery-actions">
+          <button class="gallery-btn" data-action="copy" data-code="${encodeURIComponent(p.content)}">Copy Code</button>
+          <a class="gallery-btn" href="crosshair-maker.html?code=${encodeURIComponent(p.content)}">Load in Maker</a>
+        </div>
+      </div>
+    `).join('');
+
+    data.forEach((p, i) => {
+      const canvas = document.getElementById(`ghCanvas${i}`);
+      if(!canvas) return;
+      const state = typeof decodeCrosshairCode === 'function' ? decodeCrosshairCode(p.content) : null;
+      const ctx = canvas.getContext('2d');
+      if(state){
+        renderCrosshairToCanvas(canvas, state);
+      } else {
+        ctx.fillStyle = 'rgba(166,176,214,.55)';
+        ctx.font = '11px Rajdhani, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('Invalid code', canvas.width/2, canvas.height/2);
+      }
+    });
+
+    container.querySelectorAll('[data-action="copy"]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const code = decodeURIComponent(btn.getAttribute('data-code'));
+        try {
+          await navigator.clipboard.writeText(code);
+          const old = btn.textContent;
+          btn.textContent = 'Copied!';
+          setTimeout(() => { btn.textContent = old; }, 1500);
+        } catch(e) { alert('Auto-copy failed. Code: ' + code); }
+      });
+    });
+  } catch(e) {
+    if(container) container.innerHTML = `<div class="gallery-empty">Failed to load gallery.</div>`;
+  }
 }
 
 function describe(node, main, path){
