@@ -567,8 +567,8 @@ function renderContent(){
           <span class="dot"></span>
           <span>${k.label}</span>
         </button>`).join('')}</div>` : ''}
+    ${POST_LINKS[node.id] ? `<button class="btn-createpost" id="btnCreatePost">Create Post</button>` : ''}
     <div class="status-note">This section mirrors the site mindmap — structure only, content to be filled in as the hub is built out.</div>
-    ${POST_LINKS[node.id] ? `<button class="btn small ghost" id="btnCreatePost" style="margin-top:14px;">Create Post</button>` : ''}
   `;
 
   if(POST_LINKS[node.id]){

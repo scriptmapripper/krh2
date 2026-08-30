@@ -205,8 +205,15 @@ ul.tree ul.tree{margin-left:16px; border-left:1px dashed var(--border-strong); p
 .child-card:hover{border-color:color-mix(in srgb, var(--c) 55%, transparent); background:rgba(255,255,255,.045); transform:translateY(-3px) scale(1.01); box-shadow:0 10px 26px -12px color-mix(in srgb, var(--c) 50%, transparent);}
 .child-card .dot{margin-bottom:10px; width:8px; height:8px;}
 .child-card span{display:block; font-weight:700; font-size:16px; color:var(--text-0);}
+.btn-createpost{
+  display:inline-block; margin-top:0; margin-bottom:18px; padding:13px 26px; border-radius:12px;
+  border:1px solid var(--border-strong); background:rgba(122,150,255,.1);
+  color:var(--text-0); font-family:'Rajdhani',sans-serif; font-weight:700;
+  font-size:15.5px; letter-spacing:.4px; cursor:pointer; transition:.15s ease;
+}
+.btn-createpost:hover{background:rgba(122,150,255,.18); border-color:var(--g1, #7a96ff); transform:translateY(-1px);}
 .status-note{
-  margin-top:28px; padding:16px 18px; border-radius:12px;
+  margin-top:16px; padding:16px 18px; border-radius:12px;
   border:1px dashed var(--border-strong); color:var(--text-2);
   font-family:'Rajdhani',sans-serif; font-size:14px; letter-spacing:.4px;
 }
