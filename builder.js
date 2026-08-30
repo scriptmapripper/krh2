@@ -622,20 +622,28 @@ async function loadCrosshairGallery(cat){
     if(!data.length){ container.innerHTML = `<div class="gallery-empty">Nothing posted here yet. Be the first!</div>`; return; }
     if(document.getElementById('crosshairGallery') !== container) return; /* navigated away */
 
-    container.innerHTML = data.map((p, i) => `
+    container.innerHTML = data.map((p, i) => {
+      const isImage = /^https?:\/\//.test(p.content);
+      return `
       <div class="gallery-card">
-        <canvas class="gallery-canvas" id="ghCanvas${i}" width="120" height="120"></canvas>
+        ${isImage
+          ? `<img class="gallery-canvas" src="${p.content}" alt="${escapeHtml(p.title)}">`
+          : `<canvas class="gallery-canvas" id="ghCanvas${i}" width="120" height="120"></canvas>`}
         <div class="gallery-title">${escapeHtml(p.title)}</div>
         <div class="gallery-meta">by ${escapeHtml(p.profiles?.display_name || '?')} · ${formatDate(p.created_at)}</div>
         <div class="gallery-actions">
-          <button class="gallery-btn" data-action="copy" data-code="${encodeURIComponent(p.content)}">Copy Code</button>
-          <button class="gallery-btn" data-action="download" data-code="${encodeURIComponent(p.content)}" data-name="${escapeHtml(p.title)}">Download PNG</button>
-          <a class="gallery-btn" href="crosshair-maker.html?code=${encodeURIComponent(p.content)}">Load in Maker</a>
+          ${isImage
+            ? `<a class="gallery-btn" href="${p.content}" download="${(p.title || 'crosshair').replace(/[^a-z0-9-_]+/gi, '_').toLowerCase()}.png">Download PNG</a>`
+            : `<button class="gallery-btn" data-action="copy" data-code="${encodeURIComponent(p.content)}">Copy Code</button>
+               <button class="gallery-btn" data-action="download" data-code="${encodeURIComponent(p.content)}" data-name="${escapeHtml(p.title)}">Download PNG</button>
+               <a class="gallery-btn" href="crosshair-maker.html?code=${encodeURIComponent(p.content)}">Load in Maker</a>`}
         </div>
       </div>
-    `).join('');
+    `;
+    }).join('');
 
     data.forEach((p, i) => {
+      if(/^https?:\/\//.test(p.content)) return; /* real image, nothing to draw */
       const canvas = document.getElementById(`ghCanvas${i}`);
       if(!canvas) return;
       const state = typeof decodeCrosshairCode === 'function' ? decodeCrosshairCode(p.content) : null;

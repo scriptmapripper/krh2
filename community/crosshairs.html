@@ -25,9 +25,12 @@
     <h2>Post Your Crosshair</h2>
     <label>Title</label>
     <input type="text" id="pTitle" placeholder="Your crosshair name">
-    <label>Crosshair Code</label>
-    <textarea id="pContent" placeholder="Paste the code from Crosshair Maker here, or write a description"></textarea>
-    <p class="hint">Code from the Custom Crosshair Maker can be pasted directly here.</p>
+    <label>Crosshair Image (PNG)</label>
+    <input type="file" id="pImage" accept="image/png">
+    <p class="hint">Design it in the Crosshair Maker, then export/upload the PNG here.</p>
+    <div id="pPreviewWrap" style="display:none; margin:12px 0;">
+      <img id="pPreview" alt="Preview" style="max-width:160px; max-height:160px; border-radius:10px; border:1px solid var(--border); background:#05070f;">
+    </div>
     <button class="btn green" id="btnPublish">Publish Crosshair</button>
     <div class="msg" id="createMsg"></div>
   </div>
@@ -46,6 +49,24 @@
 <script src="supabase-client.js"></script>
 <script>
 let me = null;
+let pendingFile = null; /* File object staged for upload */
+
+function dataURLtoFile(dataUrl, filename) {
+  const arr = dataUrl.split(",");
+  const mime = arr[0].match(/:(.*?);/)[1];
+  const bstr = atob(arr[1]);
+  let n = bstr.length;
+  const u8arr = new Uint8Array(n);
+  while (n--) u8arr[n] = bstr.charCodeAt(n);
+  return new File([u8arr], filename, { type: mime });
+}
+
+function setPreview(file) {
+  pendingFile = file;
+  const url = URL.createObjectURL(file);
+  document.getElementById("pPreview").src = url;
+  document.getElementById("pPreviewWrap").style.display = "block";
+}
 
 async function boot() {
   me = await getSessionUser();
@@ -69,10 +90,11 @@ async function boot() {
     document.getElementById("submitCard").style.display = "block";
     document.getElementById("loginPrompt").style.display = "none";
 
-    const params = new URLSearchParams(window.location.search);
-    const code = params.get("code");
-    if (code) {
-      document.getElementById("pContent").value = code;
+    /* Handoff from Crosshair Maker's "Post this Crosshair" button */
+    const staged = sessionStorage.getItem("pendingCrosshairImage");
+    if (staged) {
+      sessionStorage.removeItem("pendingCrosshairImage");
+      setPreview(dataURLtoFile(staged, "crosshair.png"));
       document.getElementById("pTitle").focus();
     }
   } else {
@@ -82,24 +104,49 @@ async function boot() {
   loadFeed();
 }
 
+document.getElementById("pImage")?.addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (file) setPreview(file);
+});
+
 document.getElementById("btnPublish")?.addEventListener("click", async () => {
   const msg = document.getElementById("createMsg");
   const title = document.getElementById("pTitle").value.trim();
-  const content = document.getElementById("pContent").value.trim();
-  if (!title || !content) {
-    msg.className = "msg error show"; msg.textContent = "Title & code are required.";
+  if (!title || !pendingFile) {
+    msg.className = "msg error show"; msg.textContent = "Title & a PNG image are required.";
     return;
   }
+
+  const btn = document.getElementById("btnPublish");
+  btn.disabled = true; btn.textContent = "Publishing...";
+
+  const path = `${me.id}/${Date.now()}.png`;
+  const { error: uploadError } = await sb.storage
+    .from("crosshairs")
+    .upload(path, pendingFile, { upsert: true, cacheControl: "3600", contentType: "image/png" });
+
+  if (uploadError) {
+    msg.className = "msg error show"; msg.textContent = uploadError.message;
+    btn.disabled = false; btn.textContent = "Publish Crosshair";
+    return;
+  }
+
+  const { data: publicData } = sb.storage.from("crosshairs").getPublicUrl(path);
+  const content = publicData.publicUrl;
+
   const { error } = await sb.from("posts").insert({
     author_id: me.id, title, content, status: "published", category: "crosshair",
   });
+  btn.disabled = false; btn.textContent = "Publish Crosshair";
   if (error) {
     msg.className = "msg error show"; msg.textContent = error.message;
     return;
   }
   msg.className = "msg ok show"; msg.textContent = "Your crosshair has been posted!";
   document.getElementById("pTitle").value = "";
-  document.getElementById("pContent").value = "";
+  document.getElementById("pImage").value = "";
+  document.getElementById("pPreviewWrap").style.display = "none";
+  pendingFile = null;
   loadFeed();
   try {
     if (window.parent && typeof window.parent.loadCrosshairGallery === "function") {
@@ -112,18 +159,6 @@ async function loadFeed() {
   /* The list view now lives in the "Community Crosshairs" gallery on the
      main placeholder page — publishing here still writes to the posts
      table with category "crosshair", it's just not re-listed here. */
-}
-
-async function copyCode(btn, id) {
-  const code = decodeURIComponent(btn.getAttribute("data-code"));
-  try {
-    await navigator.clipboard.writeText(code);
-    const old = btn.textContent;
-    btn.textContent = "Copied!";
-    setTimeout(() => { btn.textContent = old; }, 1500);
-  } catch(e) {
-    alert("Auto-copy failed. Code: " + code);
-  }
 }
 
 boot();

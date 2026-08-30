@@ -325,9 +325,13 @@ document.getElementById('btnCopy').addEventListener('click', async () => {
 });
 
 document.getElementById('btnPost').addEventListener('click', () => {
-  const code = document.getElementById('codeOut').value;
-  const target = 'community/crosshairs.html?code=' + encodeURIComponent(code);
-  window.top.location.href = target;
+  try {
+    sessionStorage.setItem('pendingCrosshairImage', canvas.toDataURL('image/png'));
+  } catch(e) {
+    showMsg('error', 'Could not prepare image for posting.');
+    return;
+  }
+  window.top.location.href = 'community/crosshairs.html';
 });
 
 document.getElementById('btnDownload').addEventListener('click', () => {
