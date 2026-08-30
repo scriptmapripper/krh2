@@ -178,17 +178,12 @@
 
     <div class="panel">
       <h2>Export</h2>
-      <textarea id="codeOut" readonly></textarea>
-      <div class="row" style="margin-top:10px;">
-        <button class="btn ghost" id="btnCopy" style="margin-top:0;">Copy Code</button>
-        <button class="btn ghost" id="btnReset" style="margin-top:0;">Reset</button>
-      </div>
+      <button class="btn ghost" id="btnReset">Reset</button>
       <button class="btn ghost" id="btnDownload">Download PNG</button>
       <button class="btn primary" id="btnPost">Post this Crosshair</button>
       <div class="msg" id="exportMsg"></div>
       <p style="font-size:11.5px;color:var(--faint);margin-top:10px;">
-        Paste this code into Krunker's crosshair settings, or share it via
-        the <b>Crosshairs</b> tab so other players can grab it too.
+        Download the PNG, or post it straight to the <b>Crosshairs</b> tab so other players can grab it too.
       </p>
     </div>
   </div>
@@ -288,10 +283,6 @@ function updateLabels(s){
   vals.vOutlineWidth.textContent = s.outlineWidth + 'px';
 }
 
-function encodeCode(s){
-  const json = JSON.stringify(s);
-  return 'KRXH1:' + btoa(unescape(encodeURIComponent(json)));
-}
 function decodeCode(code){
   return decodeCrosshairCode(code);
 }
@@ -300,7 +291,6 @@ function update(){
   const s = getState();
   render(s);
   updateLabels(s);
-  document.getElementById('codeOut').value = encodeCode(s);
 }
 
 Object.values(els).forEach(el => { el.addEventListener('input', update); el.addEventListener('change', update); });
@@ -312,17 +302,6 @@ document.querySelectorAll('.preset-btn').forEach(btn => {
 });
 
 document.getElementById('btnReset').addEventListener('click', () => setState(PRESETS[0].v));
-
-document.getElementById('btnCopy').addEventListener('click', async () => {
-  const box = document.getElementById('codeOut');
-  box.select();
-  try {
-    await navigator.clipboard.writeText(box.value);
-    showMsg('ok', 'Code disalin ke clipboard!');
-  } catch(e) {
-    showMsg('error', 'Gagal auto-copy — code sudah di-select, tinggal Ctrl+C.');
-  }
-});
 
 document.getElementById('btnPost').addEventListener('click', () => {
   try {

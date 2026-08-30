@@ -610,6 +610,8 @@ async function loadCrosshairGallery(cat){
   if(!container || typeof sb === 'undefined') return;
 
   try {
+    const currentUser = typeof getSessionUser === 'function' ? await getSessionUser() : null;
+
     const { data, error } = await sb
       .from('posts')
       .select('*, profiles!posts_author_id_fkey(username,display_name,avatar_url)')
@@ -624,6 +626,7 @@ async function loadCrosshairGallery(cat){
 
     container.innerHTML = data.map((p, i) => {
       const isImage = /^https?:\/\//.test(p.content);
+      const isOwner = currentUser && p.author_id === currentUser.id;
       return `
       <div class="gallery-card">
         ${isImage
@@ -634,9 +637,11 @@ async function loadCrosshairGallery(cat){
         <div class="gallery-actions">
           ${isImage
             ? `<a class="gallery-btn" href="${p.content}" download="${(p.title || 'crosshair').replace(/[^a-z0-9-_]+/gi, '_').toLowerCase()}.png">Download PNG</a>`
-            : `<button class="gallery-btn" data-action="copy" data-code="${encodeURIComponent(p.content)}">Copy Code</button>
-               <button class="gallery-btn" data-action="download" data-code="${encodeURIComponent(p.content)}" data-name="${escapeHtml(p.title)}">Download PNG</button>
-               <a class="gallery-btn" href="crosshair-maker.html?code=${encodeURIComponent(p.content)}">Load in Maker</a>`}
+            : `<button class="gallery-btn" data-action="download" data-code="${encodeURIComponent(p.content)}" data-name="${escapeHtml(p.title)}">Download PNG</button>`}
+          ${isOwner ? `
+            <button class="gallery-btn" data-action="edit" data-id="${p.id}" data-title="${escapeHtml(p.title)}">Edit</button>
+            <button class="gallery-btn" data-action="delete" data-id="${p.id}">Delete</button>
+          ` : ''}
         </div>
       </div>
     `;
@@ -658,18 +663,6 @@ async function loadCrosshairGallery(cat){
       }
     });
 
-    container.querySelectorAll('[data-action="copy"]').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        const code = decodeURIComponent(btn.getAttribute('data-code'));
-        try {
-          await navigator.clipboard.writeText(code);
-          const old = btn.textContent;
-          btn.textContent = 'Copied!';
-          setTimeout(() => { btn.textContent = old; }, 1500);
-        } catch(e) { alert('Auto-copy failed. Code: ' + code); }
-      });
-    });
-
     container.querySelectorAll('[data-action="download"]').forEach(btn => {
       btn.addEventListener('click', () => {
         const code = decodeURIComponent(btn.getAttribute('data-code'));
@@ -683,6 +676,27 @@ async function loadCrosshairGallery(cat){
         link.download = name.replace(/[^a-z0-9-_]+/gi, '_').toLowerCase() + '.png';
         link.href = exportCanvas.toDataURL('image/png');
         link.click();
+      });
+    });
+    container.querySelectorAll('[data-action="edit"]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.getAttribute('data-id');
+        const currentTitle = btn.getAttribute('data-title');
+        const newTitle = prompt('Edit title:', currentTitle);
+        if(newTitle === null || !newTitle.trim() || newTitle.trim() === currentTitle) return;
+        const { error } = await sb.from('posts').update({ title: newTitle.trim() }).eq('id', id);
+        if(error){ alert('Failed to update: ' + error.message); return; }
+        loadCrosshairGallery(cat);
+      });
+    });
+
+    container.querySelectorAll('[data-action="delete"]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        if(!confirm('Delete this crosshair post? This cannot be undone.')) return;
+        const id = btn.getAttribute('data-id');
+        const { error } = await sb.from('posts').delete().eq('id', id);
+        if(error){ alert('Failed to delete: ' + error.message); return; }
+        loadCrosshairGallery(cat);
       });
     });
   } catch(e) {

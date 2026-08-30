@@ -58,6 +58,7 @@
 <script src="supabase-client.js"></script>
 <script>
 let me = null;
+let myPostsCache = [];
 
 async function boot() {
   me = await requireLogin("login.html");
@@ -128,10 +129,53 @@ async function loadMyPosts() {
         ${p.status === 'draft'
           ? `<button class="btn small green" onclick="togglePublish('${p.id}','published')">Publish</button>`
           : `<button class="btn small ghost" onclick="togglePublish('${p.id}','draft')">Unpublish</button>`}
+        <button class="btn small ghost" onclick="startEdit('${p.id}')">Edit</button>
         <button class="btn small danger" onclick="deletePost('${p.id}')">Delete</button>
       </div>
     </div>
   `).join("");
+  myPostsCache = data;
+}
+
+function startEdit(id) {
+  const p = myPostsCache.find(x => x.id === id);
+  if (!p) return;
+  const el = document.querySelector(`.post-item[data-id="${id}"]`);
+  if (!el) return;
+  el.innerHTML = `
+    <label>Title</label>
+    <input type="text" id="editTitle-${id}" value="${escapeHtml(p.title)}">
+    <label>Content</label>
+    <textarea id="editContent-${id}">${escapeHtml(p.content)}</textarea>
+    ${p.category === 'crosshair' ? `<p class="hint">This post's content is the uploaded image link — only edit it if you're replacing the image URL directly. To change the image itself, delete this post and upload a new one.</p>` : ''}
+    <div class="post-actions">
+      <button class="btn small green" onclick="saveEdit('${id}')">Save</button>
+      <button class="btn small ghost" onclick="loadMyPosts()">Cancel</button>
+    </div>
+    <div class="msg" id="editMsg-${id}"></div>
+  `;
+}
+
+async function saveEdit(id) {
+  const title = document.getElementById(`editTitle-${id}`).value.trim();
+  const content = document.getElementById(`editContent-${id}`).value.trim();
+  const msg = document.getElementById(`editMsg-${id}`);
+  if (!title || !content) {
+    msg.className = "msg error show"; msg.textContent = "Title & content are required.";
+    return;
+  }
+  const { error } = await sb.from("posts").update({ title, content }).eq("id", id);
+  if (error) {
+    msg.className = "msg error show"; msg.textContent = error.message;
+    return;
+  }
+  loadMyPosts();
+  loadPublicFeed();
+  try {
+    if (window.parent && typeof window.parent.loadCrosshairGallery === "function") {
+      window.parent.loadCrosshairGallery("crosshair");
+    }
+  } catch(e) { /* not embedded — ignore */ }
 }
 
 async function togglePublish(id, status) {
